@@ -1,7 +1,7 @@
-# Probador_Electrico
-Probador Eléctrico para Ensamble Aeroespacial de 3 Puntas Utilizando Arduino y Raspberry Pi
+# Probador_de_Cables
+Probador de Cables para Ensamble Aeroespacial de 3 Puntas Utilizando Arduino y Raspberry Pi
 
-El funcionamiento del probador eléctrico se basa en ver la conductividad para verificar las conexiones según el diagrama.
+El funcionamiento del probador de cables se basa en ver la conductividad para verificar las conexiones según el diagrama.
 
 Para verificar las conexiones se utilizan los pines del Arduino MEGA 2560 como salidas y entradas las cuales son leídas para detectar los HIGH y LOW. Dependiendo de las lecturas se genera como resultado una cadena (String) la cual es enviada via serial al Raspberry Pi 4 el cual la recibe y la almacena en un nuevo archivo en formato XLS.
 
