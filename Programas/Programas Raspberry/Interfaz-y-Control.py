@@ -10,12 +10,10 @@ import os
 import serial
 import requests
 
-estado = 0
 
 
 
-
-def aceptar(event=None):
+def aceptar(event=None): # Función para verificar si la WO ingresada tiene la longitud deseada.
     try:
         n = int(var_texto.get())
         entrada = n
@@ -31,15 +29,14 @@ def aceptar(event=None):
             root.after(125, wiw) #1000
         else:
             var_lbl.set("#WO No Válido\nIntente Nuevamente")
-            print(len(estado))
             cuadro_texto.delete(0, 'end')
     
 
 
-root = tk.Tk()
-root.geometry("315x150")
-root.resizable(0, 0)
-root.winfo_toplevel().title("Rapid Manufacturing")
+root = tk.Tk() # Se crea la ventana de la interfáz
+root.geometry("315x150") # Se ajusta el tamaño de la ventana
+root.resizable(0, 0) # Se declara que la ventana no sea ajustable mas que por programación
+root.winfo_toplevel().title("Rapid Manufacturing") #Título de la ventana
 
 
 var_texto = tk.StringVar()
@@ -82,21 +79,19 @@ y = Label(root, image = potoi)
 y.place(relx=0, rely=0.1)
 
 
-def wiw():
+def wiw(): # Función donde comprueba si la WO ingresada es válida y si existe algún fallo de conexiones o comunicación
     ser = ""
-    alo = 0
     i = 0
     j = 0
-    coco = 0
-    workOrder = int(var_texto.get())
+    workOrder = int(var_texto.get()) # Variable donde se almacena la WO ingresada
     
     
     
-    try:
+    try: # Se define el puerto y el baud de comunicación con Arduino
         ser = serial.Serial("/dev/ttyACM0",19200)
         serialToExcel = SerialToExcel("/dev/ttyACM0",19200, workOrder)
         
-    except Exception:
+    except Exception: # Se define el puerto y el baud de comunicación con Arduino si no está disponible el otro puerto
         try:
             ser = serial.Serial("/dev/ttyACM1",19200)
             serialToExcel = SerialToExcel("/dev/ttyACM1",19200, estado)
@@ -107,34 +102,34 @@ def wiw():
             cuadro_texto.focus_set()            
                 
             
-    finally:
+    finally: # Una vez establecido el puerto de comunicación se procede a mandar la WO para obtener la RM y el No. de parte
         url = 'http://192.168.0.60:8080/api/RapidCommunity/ManufacturingEngineering/GetRmAndPartNumberByWo'
         myobj = {
-        "apiUser": "ApiUserME",
-        "apiKey": "549edce7-add2-4fd9-80d5-cda535f24a0f",
+        "apiUser": "*********",
+        "apiKey": "**********************************",
         "workOrder":workOrder
-        }
+        } # Por cuestiones de seguridad no se publica "apiUser" y "apiKey"
             
-        try:
+        try: # Aquí se verifica que la WO sea válida
             response = requests.post(url, json = myobj)
             rm = response.json()['rm']
             parte = response.json()['partNumber']
-        except Exception:
+        except Exception: # Si la WO no es válida se imprime una Error
             var_lbl.set("Error con WO\nIntente Nuevamente")
             cuadro_texto.delete(0, 'end')
             cuadro_texto.focus_set()
-        else:
+        else: # Si la WO es válida se manda un número al Arduino para indicar que programa correr dependiendo de la RM obtenida
             time.sleep(0.5)
             if rm == 'RM80983':
                 ser.write("3\n".encode('utf-8'))
             elif rm == 'RM81418':
                 ser.write("2\n".encode('utf-8'))
                 #print("aqui")
-            else:
+            else: # Si no se encuentra la RM reustrada se deberá notificar
                 ser.write("Revisar".encode('utf-8'))
             time.sleep(0.5)
             
-            def waw(rm):
+            def waw(rm): # Función para almacenar los datos obtenidos de Arduino a un archivo .xls
 
                 columnas = ["#","Instruction Type","From Points", "To Points", "Measured"]
 
@@ -180,12 +175,7 @@ def wiw():
                 
                 reading = ser.readline().decode('utf-8', errors = 'replace')
                 #print(reading.strip())
-                if reading.strip() == "bai":
-                    print("hola")
-                    coco = 1
-                    print(coco)
-                    break
-                elif reading.strip() != 'break':
+                if reading.strip() != 'break':
                     print(reading)
                     f = open('myfile.txt', 'a')
                     f.write(reading)
@@ -196,15 +186,7 @@ def wiw():
             
             if os.stat("myfile.txt").st_size <= 10:
                 alo = 1
-                if coco == 0:
-                    #alo = 1
-                    var_lbl.set("Intente Nuevamente.")
-                    cuadro_texto.delete(0, 'end')
-                    #cuadro_texto.focus_set()
-                elif coco == 1:
-                    #alo = 1
-                    var_lbl.set("Comprobar Conexión\nRaspberry - Arduino")
-                    #cuadro_texto.focus_set()
+                
                 cuadro_texto.delete(0, 'end')
                 cuadro_texto.focus_set()
                 
@@ -246,11 +228,11 @@ def wiw():
                     #cuadro_texto.focus_set()
                     root.after(50, gg)
 
-def close(event):
+def close(event): # Función para cerrar la ventana de interfáz con la tecla "esc"
     root.withdraw() # if you want to bring it back
     sys.exit() # if you want to exit the entire thing
 
-def gg():
+def gg(): # Función para repetir el programa y reiniciar el mensaja de la ventana de interfáz
     #cuadro_texto.focus_set()
     time.sleep(2)
     var_lbl.set("Ingrese #WO\nPara Comenzar")
