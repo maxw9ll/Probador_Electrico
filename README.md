@@ -1,4 +1,4 @@
-# Probador_de_Cables
+# Probador de Cables
 Probador de Cables para Ensamble Aeroespacial de 3 Puntas Utilizando Arduino y Raspberry Pi
 
 El funcionamiento del probador de cables se basa en ver la conductividad para verificar las conexiones según el diagrama.
