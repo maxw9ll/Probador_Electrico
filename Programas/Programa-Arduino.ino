@@ -1,2216 +1,830 @@
-int j24[] = {22, 24, 26, 28, 30, 32, 34, 36, 38, 40}; //Pines del Conector 3 (J24)
-int p4[] = {11, 10, 9, 8, 7, 6, 5, 4, 3, 2}; // Pines del Conector 1 (P4)
-int p9[] = {23, 25, 27, 29, A14, A15, 31, 33, 35, 37}; //Pines del COnector 2 (P9)
-int buz = 47; //Pin donde se conecta el positivo del buzzer
-int greenLed = 49; //Pin donde se conecta el positivo del Led verde
-int redLed = 51; //Pin donde se conecta el positivo del Led rojo
+// Los conectores se cuentan de arriba hacia abajo 
+int conector1[] = {11, 10, 9, 8, 7, 6, 5, 4, 3, 2}; // Pines Conector 1 = P4 = P15
+int conector2[] = {23, 25, 27, 29, A14, A15, 31, 33, 35, 37}; // Pines Conector 2 = P9
+int conector3[] = {22, 24, 26, 28, 30, 32, 34, 36, 38, 40}; // Pines Conector 3 = J24 = J15
 
+int buz = 47; // Pin de salida de buzzer
+int greenLed = 49; // Pin de salida de LED verde
+int redLed = 51; // Pin de salida de LED rojo
 
-//1141
+String bs = "BS";// Variable que sustituye la posición 10 por la tapadera
 
+int resist = 0; // Variable utilizada para detectar una resistencia 
 
-int conexionesCorrectas = 0;//Variable que se utiliza para contar las conexiones correctas en las funciones Aprobado(), Aprobadoj24p9() errores Aprobadop9p4()
-int errores = 0; //Variable que se utiliza para contar el # de errores detectados
-int ensambleAprobado = 0; //Variable que se utiliza para verificar si un ensamble aprobó o no
-int resultados = 0; //Variable que se utiliza para imprimir los resultados de las conexiones en un ciclo While
-int noConectado = 0; //Variable que se utiliza para contar cuantas puntas no están conectadas
-int fallo = 0; //Variable que se utiliza para contar cuantas puntas fallaron en sus conexiones 
+int erroresOpen[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // Arreglo donde se alamcenan los errores tipo Open
+int erroresMiswire[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // Arreglo donde se almacenan los errores tipo Miswire
 
+int conexionesIncorrectas = 0; // Varieble que almacena el numero de conexiones incorrectas entre conectore y conector
+int conexionesCorrectas = 0; // Varieble que almacena el numero de conexiones correctas entre conectore y conector
 
-
-int pines = 0; //Variable que indica si todos los pines de una punta son detectados o si no hay punta detectada
-int misi = 0; //Variable que detecta si se lee un HIGH en las posiciones 7 y 10 al mandar la señal desde la posición 10
-int misito = 0; //Variable que detecta si se lee un HIGH en las posiciones 7 y 10 al mandar la señal desde la posición 7
-int openS = 0; //Variable que se utiliza para detectar si hay alguna pin open de la punta que manda la señal
-int openR = 0; //Variable que se utiliza para detectar si hay alguna pin open de la punta que manda la señal cuando la punta posee una resistencia en sus conexiones
-int resistenciaD = 0; //Variable que se utiliza para detectar si se encuentra la resistencia conectada
-String bs = "BS"; //Variable que se utiliza para sustituir la posición 10 por BackShell
-
-
-
-int op[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; //Array que si detecta un open coloca un "1" en la posición donde fue detectado. Conexión J24(Output) -- P4(Input)
-int misO[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; //Array que si detecta un Miswire en la punta que se utilizó como salida coloca un "1" en la posición donde fue detectado. Conexión J24(Output) -- P4(Input)
-int misI[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; //Array que si detecta un Miswire en la punta que se utilizó como entrada coloca un "1" en la posición donde fue detectado. Conexión J24(Output) -- P4(Input)
-
-int opj24p9[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; //Array que si detecta un open coloca un "1" en la posición donde fue detectado. Conexión J24(Output) -- P9(Input)
-int misOj24p9[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; //Array que si detecta un Miswire en la punta que se utilizó como salida coloca un "1" en la posición donde fue detectado. Conexión J24(Output) -- P9(Input)
-int misIj24p9[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; //Array que si detecta un Miswire en la punta que se utilizó como entrada coloca un "1" en la posición donde fue detectado. Conexión J24(Output) -- P9(Input)
-
-int opp9p4[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; //Array que si detecta un open coloca un "1" en la posición donde fue detectado. Conexión P9(Output) -- P4(Input)
-int misOp9p4[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; //Array que si detecta un Miswire en la punta que se utilizó como salida coloca un "1" en la posición donde fue detectado. Conexión P9(Output) -- P4(Input)
-int misIp9p4[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; //Array que si detecta un Miswire en la punta que se utilizó como entrada coloca un "1" en la posición donde fue detectado. Conexión P9(Output) -- P4(Input)
-
-String arr[] = {" ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " "}; //Array donde se coloca el estado de la conexión. Si pasó o cual fue la falla de la conexión probada
-
-String sta2[] = {"1,WIRE,P4-001,J24-001,", "2,WIRE,J24-001,P9-001,", "3,WIRE,P4-002,J24-002,", "4,WIRE,J24-002,P9-002,", "5,WIRE,P4-007,P4-BS,", "6,WIRE,P4-BS,J24-007,", 
+String conexiones3Puntas[] = {"1,WIRE,P4-001,J24-001,", "2,WIRE,J24-001,P9-001,", "3,WIRE,P4-002,J24-002,", "4,WIRE,J24-002,P9-002,", "5,WIRE,P4-007,P4-BS,", "6,WIRE,P4-BS,J24-007,", 
 "7,WIRE,J24-007,J24-BS,", "8,WIRE,J24-BS,P9-007,", "9,WIRE,P9-007,P9-BS,", "10,WIRE,P4-008,P9-008,", "11,WIRE,J24-005,P9-005,", 
-"12,WIRE,J24-006,P9-006,", "13,RESISTOR,P9-005,P9-006,"}; //Array que indica las conexiones a probar el cual será mandado al raspberry junto con el Arrya "arr"
+"12,WIRE,J24-006,P9-006,", "13,RESISTOR,P9-005,P9-006,"}; // Arreglo de conexiones a analizar en un ensamble de 3 puntas con RM80983
 
-String sta3[] = {"1,WIRE,P15-001,J15-001,", "2,WIRE,P15-002,J15-002,", "3,WIRE,P15-007,P15-BS,", 
-"4,WIRE,P15-BS,J15-007,", "5,WIRE,J15-007,J15-BS,"}; //Array que indica las conexiones a probar el cual será mandado al raspberry junto con el Arrya "arr"
+String conexiones2Puntas[] = {"1,WIRE,P15-001,J15-001,", "2,WIRE,P15-002,J15-002,", "3,WIRE,P15-007,P15-BS,", 
+"4,WIRE,P15-BS,J15-007,", "5,WIRE,J15-007,J15-BS,"}; // Arreglo de conexiones a analizar en un ensamble de 2 puntas con RM81418
 
-int vs = 0; //Variable que indica si la conexión de la posición 7 con BS es correcta o si existe algún error indica cual es
-int vsM = 0; //Variable que indica si la conexión de la posición 10 con 7 es correcta o si existe algún error indica cual es
-
+String estados[] = {" ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " ", " "}; // Arreglo donde se alamcena si la conexión pasó o indica que error tuvo
 
 
 void setup() {
 
   Serial.begin(19200); //Baud rate
-    
-  for(int i = 0; i < 10; i++){ //Se declaran los pines de entrada y salida de los conectores 
-    pinMode(p4[i], INPUT); //Conector 1
-    pinMode(p9[i], INPUT); //Conector 2
-    pinMode(j24[i], OUTPUT); //Conector 3
+
+  for(int i = 0; i < 10; i++){  
+    pinMode(conector1[i], INPUT); 
+    pinMode(conector2, INPUT); 
+    pinMode(conector3, INPUT); 
   }
+    
+  pinMode(greenLed, OUTPUT); 
+  pinMode(redLed, OUTPUT); 
+  pinMode(buz, OUTPUT); 
 
-
-  pinMode(greenLed, OUTPUT); //Se declara el pin del LED verde como salida
-  pinMode(redLed, OUTPUT); //Se declara el pin del LED rojo como salida
-  pinMode(buz, OUTPUT); //Se declara el pin del buzzer como salida
-  
-
-
+  delay(50);
 }
 
-void variables(){ //Función que resetea el valor de las variables utilizadas
-  pines = 0; 
-  misi = 0;
-  misito = 0 ;
-  openS = 0;
-  openR = 0;
-  resistenciaD = 0;
-}
-
-void continuidad(){ //Función que detecta si existe la conexión de las puntas J24 -- P4
-  
+void entradas(int conector[]){ // Función para declarar como entrada los pines de un conector
   for(int i = 0; i < 10; i++){
-    digitalWrite(j24[i], HIGH);
-  }
+    pinMode(conector[i], INPUT);
+  }      
+}
+
+void salidas(int conector[]){ // Función para declarar como salida los pines de un conector
+  for(int i = 0; i < 10; i++){
+    pinMode(conector[i], OUTPUT);
+  }      
+}
+
+void high(int conector[]){ // Función para poner en HIGH los pines de un conector
+  for(int i = 0; i < 10; i++){
+    digitalWrite(conector[i], HIGH);
+  }      
+}
+
+void low(int conector[]){ // Función para poner en LOW los pines de un conector
+  for(int i = 0; i < 10; i++){
+    digitalWrite(conector[i], LOW);
+  }      
+}
+
+//*****************************************************************************************************
+
+void continuidad(int conectorSalida[], int conectorEntrada[], int conexiones){ // Función que detecta si hay ensamble conectado y llama a las funciones para realizar las pruebas
+  entradas(conectorEntrada);
+  salidas(conectorSalida);
+  high(conectorSalida);
   
-  for(int j = 0; j < 10; j++){
-    if (digitalRead(p4[j]) == HIGH){
-        pines = pines + 1;
+  int pinesDetectados = 0;
+
+  for(int i = 0; i < 10; i++){
+    if(digitalRead(conectorEntrada[i]) == HIGH){
+      pinesDetectados = pinesDetectados + 1;
     }
   }
-  
-  for(int a = 0; a < 10; a++){
-        digitalWrite(j24[a], LOW);
+  if(pinesDetectados > 0){
+    //Serial.println(F("AHI VA WUWU"));
+    low(conectorSalida);
+    entradas(conectorSalida);
+    
+    openEntrada(conectorSalida, conectorEntrada, conexiones);
+    misWire(conectorSalida, conectorEntrada, conexiones);
+    switch(conexiones){
+      case 2:
+        resistencia(conector2, 5, 6, "P9");
+      break;
+      case 3:
+        resistencia(conector2, 5, 6, "P9");
+      break;
+    }
+    entradas(conectorEntrada);
+    entradas(conectorSalida);
+    if(conexiones==4){
+      rasp2Puntas();
+    }
+    else{
+      rasp3Puntas(conexiones);
+    }
+    aprobado(erroresOpen, erroresMiswire, conexiones);
+    
   }
-      
   
-  if (pines == 0){
-    Serial.println(F("NO HAY ENSAMBLE CONECTADO J24-P4"));
+  else{
+    switch(conexiones){
+      case 1:
+        Serial.println(F("NO HAY ENSAMBLE CONECTADO J24-P4"));
+        break;
+      case 2:
+        Serial.println(F("NO HAY ENSAMBLE CONECTADO J24-P9"));
+        break;
+      case 3:
+        Serial.println(F("NO HAY ENSAMBLE CONECTADO P9-P4"));
+        break;
+      case 4:
+        Serial.println(F("NO HAY ENSAMBLE CONECTADO J15-P15"));
+        break;
+    }
     Serial.println();
-    delay(750);
-    noConectado = noConectado + 1;
-    fallo = fallo + 1;
-  }
-  
-  else{
-    openEntrada();
-    openSalida();
-    llamarMiswire();
-    misBS();
-    aprobado();
-  }
-  pines = 0;
-}
-
-
-
-void llamarMiswire(){ //Función que manda posición por posición y detecta si existe algún Miswire a través de la función "misWire"
-  for(int j = 0; j < 10; j++){
-        misWire(j);
-      }
-}
-
-void salidasOpenEntrada(int p){ //Función que imprime los open detectados del Conector 1 (P4) en J24--P4
-  op[p-1] = op[p-1] + 1;
-  
-  if(p!=10){
-    Serial.print(F("OPEN P4 EN POSICION ")); Serial.println(p);
-  }
-  else{
-    Serial.println(F("OPEN P4 EN BS"));
-  }
-  errores = errores + 1;
-  delay(125);
-}
-
-void salidaMiswire(int x, int z){ //Función que imprime los miswire detectados de la conexión J24 -- P4. "X" corresponde a J24(Conector 3) y "Z" a P4(Conector 1)
-  
-  
-  if(z==5 or z==6 or z==3 or z==4 or z==8 or z==9 or x==3 or x==4 or x==8 or x==9){
-    misO[x-1] = 1;
-    misI[z-1] = 1;
-    Serial.print(F("CONEXION J24 "));
-    
-    if(x!=10){
-      Serial.print(x);
-    }
-    
-    else{
-      Serial.print(bs);
-    }
-      
-    Serial.print(F(" - P4 "));
-    
-    if(z!=10){
-      Serial.print(z);
-    }
-    else{
-      Serial.print(bs);
-    }
-     
-    Serial.println(F(" NO DEBE CONECTARSE"));
-    errores = errores + 1;
     delay(125);
   }
-  
-  else if(x == z){
-    
-  }
-  else if(x==7 and z ==10){
-    
-  }
-  else if(x==10 and z==7){  
-  
-  }
-  
-  else{
-  misO[x-1] = 1;
-  misI[z-1] = 1;
-  Serial.print(F("MISWIRE: "));
-  if(x!=10){
-    Serial.print(x);
-  }
-  else{
-    Serial.print(bs);
-  }
-  Serial.print(F(" Y "));
-  
-  if(z!=10){
-    Serial.print(z);
-  }
-  else{
-    Serial.print(bs);
-  }
-  Serial.println(F(" J24 -- P4 :("));
-  errores = errores + 1;
-  delay(125);
-  }
 }
 
-
-void openEntrada(){ //Función que detecta los open del Conector 1 (P4) en la conexión J24--P4
-  
-  for(int j =0; j < 10; j++){
-    digitalWrite(j24[j], HIGH);
-  }
-  for(int i = 0; i < 10; i++){
     
-    switch(i){
-      
-      case 0:
-        if (digitalRead(p4[0]) == LOW){
-          salidasOpenEntrada(1);                                        
-        }
-        break;
-      case 1:
-        if (digitalRead(p4[1]) == LOW){
-          salidasOpenEntrada(2);                                        
-        }
-        break; 
-      case 6:
-        if (digitalRead(p4[6]) == LOW){
-          salidasOpenEntrada(7);                                          
-        }
-        break;
-      case 9:
-        if (digitalRead(p4[9]) == LOW and i!=6){
-          salidasOpenEntrada(10);                                        
-        }
-        break;           
-     }
-   }
-   
-   for(int a = 0; a < 10; a++){
-        digitalWrite(j24[a], LOW);
-      }
-}
+//*****************************************************************************************************
 
-
-
-void misWire(int x){ //Función que detecta los miswire en la conexión J24--P4. "X" es la posición en J24
-
-
-  for(int i = 0; i < 10; i++){
-    if(i==x){
-      pinMode(j24[x], OUTPUT);
-      digitalWrite(j24[x], HIGH);
-    }
-    else{
-      digitalWrite(j24[i], LOW);
-      pinMode(j24[i], INPUT);
-    }
-  }
-
+void openEntrada(int conectorSalida[],int conectorEntrada[], int conexiones){ // Función para detectar los errores tipo Open
+  
+  entradas(conectorEntrada);
+  salidas(conectorSalida);
+  high(conectorSalida);
+  
   for(int j = 0; j < 10; j++){
-
-    if(digitalRead(p4[j]) == HIGH and j==2 and j==x){
-      salidaMiswire(x+1, j+1);
-      errores=errores+1;
-    }
-    if(digitalRead(p4[j]) == HIGH and j==3 and j==x){
-      salidaMiswire(x+1, j+1);
-      errores=errores+1;
-    }
-    if(digitalRead(p4[j]) == HIGH and j==4 and j==x){
-      salidaMiswire(x+1, j+1);
-      errores=errores+1;
-    }
-    if(digitalRead(p4[j]) == HIGH and j==5 and j==x){
-      salidaMiswire(x+1, j+1);
-      errores=errores+1;
-    }
-    if(digitalRead(p4[j]) == HIGH and j==7 and j==x){
-      salidaMiswire(x+1, j+1);
-      errores=errores+1;
-    }
-    if(digitalRead(p4[j]) == HIGH and j==8 and j==x){
-      salidaMiswire(x+1, j+1);
-      errores=errores+1;
-    }
     
-    if(digitalRead(p4[j]) == HIGH and j!=x){
-      if(x == 6 or x == 9){
-        switch(x){
-            case 6:
-            for(int i = 0; i < 10; i++){
-              digitalWrite(j24[i], LOW);
-            }
-            pinMode(j24[9], INPUT);
-            digitalWrite(j24[6], HIGH);
-            break;
-            case 9:
-            for(int i = 0; i < 10; i++){
-              digitalWrite(j24[i], LOW);
-            }
-            pinMode(j24[6], INPUT);
-            pinMode(j24[9], OUTPUT);
-            digitalWrite(j24[3], HIGH);
-            break;
-        }      
-      }
-            salidaMiswire(x+1, j+1);        
+    if (digitalRead(conectorEntrada[j]) == LOW ){
+      salidasOpen(j+1, conexiones);     
     }
   }
-    
-    for(int k = 0; k < 10; k++){
-      pinMode(j24[k], OUTPUT);
-      digitalWrite(j24[k], LOW);
-    }
+  low(conectorSalida);
+  entradas(conectorSalida);
 }
 
-void misBS(){ //Función que detecta los posibles miswire de las posiciones 7 y BS que no fueron detectados anteriormente
-  
-  for(int i = 0; i < 10; i++){
-    pinMode(j24[i], OUTPUT);
-    digitalWrite(j24[i], LOW);
-    pinMode(j24[i], INPUT);
-   }
-         
-  pinMode(j24[9], OUTPUT);
-  digitalWrite(j24[9], HIGH);
-    
-  if(digitalRead(p4[6]) == HIGH or digitalRead(p4[9]) == HIGH){
-    misi = misi + 1;
-  }
-     
-  digitalWrite(j24[9], LOW);
-  pinMode(j24[9], INPUT);
-  pinMode(j24[6], OUTPUT);
-  digitalWrite(j24[6], HIGH);
-          
-  if(digitalRead(p4[6]) == HIGH or digitalRead(p4[9]) == HIGH){
-    misito = misito + 1;
-   }
-       
-  digitalWrite(j24[6], LOW);
-          
-  if(misi == 1 and misito == 0){
-    
-    for(int i = 0; i < 10; i++){
-      
-      if(i!= 6 and i!=9){   
-        pinMode(j24[i], OUTPUT);
-        digitalWrite(j24[i], HIGH);
+void salidasOpen(int posicion, int conexiones){ // Función para imprimir los errores tipo Open
+  switch(conexiones){
+    case 1:
+      if(posicion == 1 or posicion == 2 or posicion == 7){
+        Serial.print(F("OPEN J24-P4 EN POSICION ")); Serial.println(posicion);
       }
-              
-      if(digitalRead(p4[6]) == HIGH or digitalRead(p4[9]) == HIGH){
-        Serial.print(F("MISWIRE J24 ")); Serial.print(i+1);
-        Serial.println(F(" - 7"));
-        errores=errores+1; 
+      else if(posicion == 10){
+        Serial.println(F("OPEN J24-P4 EN BS "));
+      }
+      break;
+    case 2:
+      if(posicion != 3 and posicion != 4 and posicion != 8 and posicion != 9 and posicion != 10){
+        Serial.print(F("OPEN J24-P9 EN POSICION ")); Serial.println(posicion);
+      }
+      else if(posicion == 10){
+        Serial.println(F("OPEN J24-P9 EN BS ")); 
+      }
+      break;
+    case 3:
+      if(posicion == 1 or posicion == 2 or posicion == 7 or posicion == 8){
+        Serial.print(F("OPEN P9-P4 EN POSICION ")); Serial.println(posicion);
+      }
+      else if(posicion == 10){
+        Serial.println(F("OPEN P9-P4 EN BS "));
+      }
+      break;
+    case 4:
+      if(posicion == 1 or posicion == 2 or posicion == 7){
+        Serial.print(F("OPEN J15-P15 EN POSICION ")); Serial.println(posicion);
+      }
+      else if(posicion == 10){
+        Serial.println(F("OPEN J15-P15 EN BS "));
+      }
+      break;
+  }
+  erroresOpen[posicion-1] = erroresOpen[posicion-1]+1;
+  delay(125);
+}
+
+
+//*****************************************************************************************************
+
+void misWire(int conectorSalida[],int conectorEntrada[], int conexiones){ // Función para detectar los errores tipo Miswire
+ entradas(conectorEntrada);
+ salidas(conectorSalida);
+ low(conectorSalida);
+ 
+ for(int i = 0; i < 10; i++){
+   digitalWrite(conectorSalida[i], HIGH);
+
+   for(int j = 0; j < 10; j++){
+     if(digitalRead(conectorEntrada[j])==HIGH and j!=i){
+       salidasMiswire(i+1, j+1, conexiones);
+       noConectar(i+1, j+1, conexiones);
+     }
+     else if(digitalRead(conectorEntrada[j])==HIGH and i==j){
+      noConectar(i+1, j+1, conexiones);
+     }
+     
+   }
+   digitalWrite(conectorSalida[i], LOW);
+ }
+ entradas(conectorSalida);
+}
+
+void salidasMiswire(int pinSalida,int pinEntrada, int conexiones){ // Función para imprimir los errores tipo Miswire
+  
+  if (not((pinSalida==10 and pinEntrada==7) or (pinSalida==7 and pinEntrada==10))) {  //and
+      switch(conexiones){
+      
+      case 1:
+        Serial.print(F("MISWIRE J24-")); if(pinSalida != 10){Serial.print(pinSalida);} else{Serial.print(bs);}
+        Serial.print(F(" CON P4-")); if(pinEntrada != 10){Serial.println(pinEntrada);} else{Serial.println(bs);}
+        delay(125);
+        break;
+      case 2:
+        Serial.print(F("MISWIRE J24-")); if(pinSalida != 10){Serial.print(pinSalida);} else{Serial.print(bs);}
+        Serial.print(F(" CON P9-")); if(pinEntrada != 10){Serial.println(pinEntrada);} else{Serial.println(bs);}
+        delay(125);
+        break;
+      case 3:
+        Serial.print(F("MISWIRE P9-")); if(pinSalida != 10){Serial.print(pinSalida);} else{Serial.print(bs);}
+        Serial.print(F(" CON P4-")); if(pinEntrada != 10){Serial.println(pinEntrada);} else{Serial.println(bs);}
+        delay(125);
+        break;
+      case 4:
+        Serial.print(F("MISWIRE J15-")); if(pinSalida != 10){Serial.print(pinSalida);} else{Serial.print(bs);}
+        Serial.print(F(" CON P15-")); if(pinEntrada != 10){Serial.println(pinEntrada);} else{Serial.println(bs);}
+        delay(125);
+        break;
+    }
+    erroresMiswire[pinSalida-1] = erroresMiswire[pinSalida-1] + 1;
+    erroresMiswire[pinEntrada-1] = erroresMiswire[pinEntrada-1] + 1;
+  }
+}
+//*****************************************************************************************************
+void erroresNoConectar(int pinSalida, int pinEntrada){ // Función para almacenar los errores de coenxiones no deseadas
+  erroresMiswire[pinSalida-1] = erroresMiswire[pinSalida-1] + 1;
+  erroresMiswire[pinEntrada-1] = erroresMiswire[pinEntrada-1] + 1;
+}
+//*****************************************************************************************************
+
+void noConectar(int pinSalida, int pinEntrada, int conexiones){ // Función que detecta e imprime las conexiones no deseadas
+
+  switch(conexiones){
+    
+    case 1:
+      if((pinSalida != 1 and pinSalida != 2 and pinSalida != 7 and pinSalida != 10) or
+        (pinEntrada != 1 and pinEntrada != 2 and pinEntrada != 7 and pinEntrada != 10)){
+        Serial.print(F("NO DEBE CONECTARSE "));Serial.print(F("J24-P4 "));
+        if(pinSalida != 10){Serial.print(pinSalida);} else{Serial.print(bs);} 
+        Serial.print("-");
+        if(pinEntrada != 10){Serial.println(pinEntrada);} else{Serial.println(bs);}
+        erroresNoConectar(pinSalida-1, pinEntrada-1);
         delay(125);
       }
-          
-      digitalWrite(j24[i], LOW);
-      digitalWrite(j24[i], INPUT);
-        
-    }
-        
-    misi = 0;
-    misito = 0;
-  }
-          
-  else if(misi == 0 and misito == 1){
-    
-    pinMode(j24[6], INPUT);
-    
-    for(int i = 0; i < 9; i++){
-      
-      if(i!= 6 and i!=9){ 
-        pinMode(j24[i], OUTPUT);
-        digitalWrite(j24[i], HIGH);
+      break;
+    case 2:
+      if((pinSalida == 3 or pinSalida == 4 or pinSalida == 8 or pinSalida == 9) or
+        (pinEntrada == 3 or pinEntrada == 4 or pinEntrada == 8 or pinEntrada == 9)){
+        Serial.print(F("NO DEBE CONECTARSE "));Serial.print(F("J24-P9 "));
+        if(pinSalida != 10){Serial.print(pinSalida);} else{Serial.print(bs);} 
+        Serial.print("-");
+        if(pinEntrada != 10){Serial.println(pinEntrada);} else{Serial.println(bs);}
+        erroresNoConectar(pinSalida-1, pinEntrada-1);
+        delay(125);
       }
-              
-      if(digitalRead(p4[6]) == HIGH or digitalRead(p4[7]) == HIGH){
-        Serial.print(F("MISWIRE J24 ")); Serial.print(i+1);
-        Serial.println(F(" - BS"));
-        errores=errores+1;
-        delay(125); 
+      break;
+    case 3:
+      if((pinSalida == 3 or pinSalida == 4 or pinSalida == 5 or pinSalida == 6 or pinSalida == 9) or
+        pinEntrada == 3 or pinEntrada == 4 or pinEntrada == 5 or pinEntrada == 6 or pinEntrada == 9){
+        Serial.print(F("NO DEBE CONECTARSE "));Serial.print(F("P9-P4 "));
+        if(pinSalida != 10){Serial.print(pinSalida);} else{Serial.print(bs);} 
+        Serial.print("-");
+        if(pinEntrada != 10){Serial.println(pinEntrada);} else{Serial.println(bs);}
+        erroresNoConectar(pinSalida-1, pinEntrada-1);
+        delay(125);
       }
-      
-      digitalWrite(j24[i], LOW);
-      digitalWrite(j24[i], INPUT);
-            
-    }
-    
-    misi = 0;
-    misito = 0;
-       
+      break;
+    case 4:
+      if((pinSalida != 1 and pinSalida != 2 and pinSalida != 7 and pinSalida != 10) or
+        (pinEntrada != 1 and pinEntrada != 2 and pinEntrada != 7 and pinEntrada != 10)){
+        Serial.print(F("NO DEBE CONECTARSE "));Serial.print(F("J15-P15 "));
+        if(pinSalida != 10){Serial.print(pinSalida);} else{Serial.print(bs);} 
+        Serial.print("-");
+        if(pinEntrada != 10){Serial.println(pinEntrada);} else{Serial.println(bs);}
+        erroresNoConectar(pinSalida-1, pinEntrada-1);
+        delay(125);
+      }
+      break;
   }
+}
 
-  else if(misi ==0 and misito == 0){
-    
-    for(int i = 0; i < 10; i++){
-      
-      if(i!= 6 and i!=9){
-        pinMode(j24[i], OUTPUT);
-        digitalWrite(j24[i], HIGH);
-      }
-              
-      if(digitalRead(p4[6]) == HIGH or digitalRead(p4[9]) == HIGH){
-        Serial.print(F("MISWIRE J24 ")); Serial.print(i+1);
-        Serial.println(F(" CON P4: 7 Y BS"));
-        errores=errores+1;
-        delay(125);  
-      }
-           
-      digitalWrite(j24[i], LOW);
-      pinMode(j24[i], INPUT);
+//*****************************************************************************************************
+
+void resistencia(int conector[], int pin1, int pin2, String designador){ // Función para detectar una resistencia
+  entradas(conector);
+  int detectada = 0;
+
+  pinMode(conector[pin1-1], OUTPUT);
+  digitalWrite(conector[pin1-1], HIGH);
+  
+    if(analogRead(conector[pin2-1]) > 95 and analogRead(conector[pin2-1]) < 1024){
+     detectada = detectada + 1;
     }
+
+
+   digitalWrite(conector[pin1-1], LOW);
+   pinMode(conector[pin1-1], INPUT);  
+   pinMode(conector[pin2-1], OUTPUT);
+   digitalWrite(conector[pin2-1], HIGH);
+
+  
+   if(analogRead(conector[pin1-1]) > 95 and analogRead(conector[pin1-1]) < 1024){
+    detectada = detectada + 1;
+    if(detectada ==2){
+      estados[12] = "DETECTED";
+    }
+   }
+    
+   digitalWrite(conector[pin2-1], LOW);
+   pinMode(conector[pin2-1], INPUT);
  
+
+
+  if(detectada < 2){
+    Serial.print(F("RESISTENCIA NO DETECTADA EN "));Serial.print(designador); Serial.print(": "); Serial.print(pin1);Serial.print(F("-"));Serial.println(pin2);
+    resist = resist + 1;
+    estados[12] = "NOT DETECTED";
+    delay(500);
   }
-  misi = 0;
-  misito = 0;
-       
-  for(int k = 0; k < 10; k++){
-    pinMode(j24[k], OUTPUT);
-    digitalWrite(j24[k], LOW);
-  }   
+  
+  detectada=0;
   
 }
 
+//*****************************************************************************************************
 
+void aprobado(int erroresOp[], int erroresMis[], int conexiones){ // Función que imprime si las conexiones entre dos conectores han sido aprobadas o no
+  
 
-
-void aprobado(){ //Función que evalua si la conexión J24--P4 pasó o no pasó
   
   for(int i = 0; i < 10; i++){
-    digitalWrite(j24[i], LOW);
-  }
-  
-  conexionesCorrectas=0;
-  
-  for(int j = 0; j < 10; j++){
-    digitalWrite(j24[j],HIGH);
-    if(digitalRead(p4[j] == HIGH)){
-      if(errores==0){
-        if(j != 4 && j != 5 and j!=2 and j!=3 and j!=7 and j!=8){
-          conexionesCorrectas = conexionesCorrectas + 1;
-        } 
-       }
-    digitalWrite(j24[j],LOW);
-    }
-  }
-  
-  if(conexionesCorrectas == 4){
-    Serial.println(F("CONEXION J24-P4 APROBADA :)"));
-    delay(125);  
-    Serial.println();
-    ensambleAprobado = ensambleAprobado + 1;
-    delay(125);
-  }
-  else{     
-    Serial.println(F("CONEXION J24-P4 DEFECTUOSA :("));
-    delay(125);  
-    Serial.println();
-    delay(125);
-    fallo = fallo + 1;
-  }
-  conexionesCorrectas = 0;
-  errores = 0;
-}
-
-
-
-void salidasMini(int o){ //Función que imprime los open detectados del Conector 3 (J24) en J24--P4
-  op[o-1] = op[o-1] + 2;
-  if(o!=10){
-    Serial.print(F("OPEN J24 POSICION ")); Serial.println(o);
-  }
-  else{
-    Serial.println(F("OPEN J24 EN BS"));
-  }
-  errores=errores+1;
-  delay(125);
-}
-
-
-
-void openSalida(){ //Función que detecta los open del Conector 3 (J24) en la conexión J24--P4
-  openS = 0;
- for(int i = 0; i < 10; i++){
-  digitalWrite(j24[i], LOW);
-  pinMode(j24[i], INPUT);
- }
- openS = 0;
-
-  for(int k =0; k < 10; k++){
-    pinMode(j24[k], OUTPUT);
-    digitalWrite(j24[k], HIGH);
-   // pinMode(j24[1], INPUT);
-    for(int j = 0; j < 10; j++){
-      if(digitalRead(p4[j]) == LOW){
-        openS = openS + 1;
-      }
-    }
-    
-      if(openS == 10){
-        switch(k){
-      
-        
-        case 0:
-            salidasMini(1);
-          break;
-        case 1:
-            salidasMini(2);
-          break;
-        case 6:
-            salidasMini(7);
-          break;
-        case 9:
-            salidasMini(10);
-          break;
-        }
-      }
-       
-      openS = 0;
-      digitalWrite(j24[k], LOW);
-      pinMode(j24[k], INPUT);
-  }
-  for(int i = 0; i < 10; i++){
-  pinMode(j24[i], OUTPUT);
- }
-
-}
-
-
-//
-
-/**
- * 
- * 
- * 
- * 
- * BLOQUE DE CÓDIGO PARA CONEXIÓN J24--P9 (CONECTOR 3 Y CONECTOR 2)
- * 
- * 
- * 
- * 
- */
-
-
-void continuidadj24p9(int puntas){ //Función que detecta si existe la conexión de las puntas J24 -- P9
-  
-  for(int i = 0; i < 10; i++){ // Se ponen en HIGH todas los pines de salida (J24)
-    digitalWrite(j24[i], HIGH);
-  }
-  for(int j = 0; j < 10; j++){  // Se leen las entradas (P9)
-    if (digitalRead(p9[j]) == HIGH){
-          pines = pines + 1;
-        
-    }
-  }
-  for(int a = 0; a < 10; a++){ // Se ponen en LOW todas los pines de salida (J24)
-    digitalWrite(j24[a], LOW);
-  }
-  
-  
-  if (pines == 0){ // Si no se detecta HIGH en los pines de entrada entonces no hay ensamble J24--P9 conectado
-    if (puntas == 3){
-      Serial.println(F("NO HAY ENSAMBLE CONECTADO J24-P9"));
-    }
-    else if (puntas == 2){
-      Serial.println(F("NO HAY ENSAMBLE CONECTADO J15-P15"));
-    }
-    Serial.println(); //Espacio al imprimir para no confundir 
-    delay(125); //Tiempo de espera
-    noConectado = noConectado + 1; //Para saber cuantos no están noConectados
-    fallo = fallo + 1; //Fallos
-  }
-  else{ //Si se detecta por lo menos 1 pin entonces se llaman a las siguientes funciones 
-    openEntradaj24p9(puntas); //Función que detecta los open del Conector 2 (P9) en la conexión J24--P9
-    
-    openSalidaj24p9(puntas); //Función que detecta los open del Conector 3 (J24) en la conexión J24--P9
-    
-    llamarMiswirej24p9(puntas); //Función que manda posición por posición y detecta si existe algún Miswire a través de la función "misWirej24p9"
-    
-    misBSj24p9(puntas); //Función que detecta los posibles miswire de las posiciones 7 y BS que no fueron detectados anteriormente
-    
-    if (puntas == 3){
-      resistenciaj24p9(); // Función para detectar la resistencia entre 5--6 de P9
-    }
-    
-    aprobadoj24p9(puntas); //Función que evalua si la conexión J24--P9 pasó o no pasó
-  }
-  pines = 0; // Se reinicia el contador para detectar pines
-}
-
-
-void llamarMiswirej24p9(int puntas){ // Llama a una salida para compararla con las entrada y ver si se conectó donde no corresponde
-  for(int j = 0; j < 10; j++){
-        misWirej24p9(j, puntas);
-      }
-}
-
-void salidasOpenEntradaj24p9(int p, int puntas){ // Si hay un open en P9 esta función es llamada para imprimirlo
-  opj24p9[p-1] = opj24p9[p-1] + 1;
-  
-  if(p!=10 and puntas == 3){
-    Serial.print(F("OPEN P9 POSICION ")); Serial.println(p);
-  }
-  
-  else if (p==10 and puntas == 3){
-    Serial.println(F("OPEN P9 EN BS"));
-  }
-  else if(p!=10 and puntas == 2){
-    Serial.print(F("OPEN P15 POSICION ")); Serial.println(p);
-  }
-  
-  else if (p==10 and puntas == 2){
-    Serial.println(F("OPEN P15 EN BS"));
-  }
-  errores = errores + 1;
-  delay(125);
-}
-
-void salidaMiswirej24p9(int x, int z, int puntas){ // Si un miswire es detectado esta función es llamada para imprimirlo
-  
-  if(z==3 or z==4 or z==8 or z==9 or x==3 or x==4 or x==8 or x==9){  
-    misOj24p9[x-1] = 1;
-    misIj24p9[z-1] = 1;
-    if (puntas==3){
-      Serial.print(F("CONEXION J24 "));
-    }
-    else if (puntas==2){
-      Serial.print(F("CONEXION J15 "));
-    }
-    
-    if(x!=10){
-      Serial.print(x);
-    }
-    else{
-      Serial.print(bs);
-    }
-    
-    if(puntas ==3){
-      Serial.print(F(" - P9 "));
-    }
-    else if(puntas==2){
-      Serial.print(F(" - P15 "));
-    }
-    
-    if(z!=10){
-      Serial.print(z);
-    }
-    else{
-      Serial.print(bs);
-    }
-    Serial.println(F(" NO DEBE CONECTARSE"));
-    errores = errores + 1;
-    delay(125);
-  }
-  
-  else if(x == z){
-    
-  }
-  
-  else if(x==7 and z ==10){
-    
-  }
-  
-  else if(x==10 and z==7){  
-  
-  }
-  
-  else{
-  misOj24p9[x-1] = 1;
-  misIj24p9[z-1] = 1;
-  Serial.print(F("MISWIRE: "));
-  
-  if(x!=10){
-    Serial.print(x);
-  }
-  else{
-    Serial.print(bs);
-  }
-  
-  Serial.print(F(" Y "));
-  
-  if(z!=10){
-    Serial.print(z);
-  }
-  else{
-    Serial.print(bs);
-  }
-  if(puntas==3){
-    Serial.println(F(" J24 - P9 :(!"));
-  }
-  else if(puntas==2){
-    Serial.println(F(" J15 - P15 :(!"));
-  }
-  errores=errores+1;
-  delay(125);
-  }
-}
-
-
-void openEntradaj24p9(int puntas){ // Función que detecta si hay alguna posición open de P9
-  
-  for(int j =0; j < 10; j++){ // Todas las salidas se ponen en HIGH
-    digitalWrite(j24[j], HIGH);
-  }
-  
-  for(int i = 0; i < 10; i++){
-    switch(i){
-      case 0:
-        if (digitalRead(p9[0]) == LOW){
-          salidasOpenEntradaj24p9(1, puntas);                                          
+    switch(conexiones){
+      case 1:
+        if((erroresOp[i] != 0 or erroresMis[i] != 0) and (i==0 or i==1 or i==6 or i==9)){
+          conexionesIncorrectas = conexionesIncorrectas + 1;
         }
         break;
-      case 1:
-        if (digitalRead(p9[1]) == LOW){
-          salidasOpenEntradaj24p9(2, puntas);                                         
+      case 2:
+        if((erroresOp[i] != 0 or erroresMis[i] != 0) and (i!=2 and i!=3 and i!=7 and i!=8)){
+          conexionesIncorrectas = conexionesIncorrectas + 1;
         }
-        break; 
+        break;
+      case 3:
+        if((erroresOp[i] != 0 or erroresMis[i] != 0) and (i==0 or i==1 or i==6 or i==7 or i==9)){
+          conexionesIncorrectas = conexionesIncorrectas + 1;
+        }
+        break;
       case 4:
-        if (digitalRead(p9[4]) == LOW){
-          salidasOpenEntradaj24p9(5, puntas); 
+        if((erroresOp[i] != 0 or erroresMis[i] != 0) and (i==0 or i==1 or i==6 or i==9)){
+          conexionesIncorrectas = conexionesIncorrectas + 1;
         }
-        break;  
-      case 5:
-        if (digitalRead(p9[5]) == LOW){
-          salidasOpenEntradaj24p9(6, puntas);                                           
-        }
-        break; 
-      case 6:
-        if (digitalRead(p9[6]) == LOW){
-          salidasOpenEntradaj24p9(7, puntas);                                           
-        }
-        break;
-      case 9:
-        if (digitalRead(p9[9]) == LOW and i!=6){
-          salidasOpenEntradaj24p9(10, puntas);                                             
-        }
-        break;          
-     }
-   }
-   for(int a = 0; a < 10; a++){
-    digitalWrite(j24[a], LOW); 
-   }
-}
-
-
-
-void misWirej24p9(int x, int puntas){
-
-
-  for(int i = 0; i < 10; i++){
-    if(i==x){
-      pinMode(j24[x], OUTPUT);
-      digitalWrite(j24[x], HIGH);
-    }
-    else{
-      digitalWrite(j24[i], LOW);
-      pinMode(j24[i], INPUT);
-    }
-  }
-
-  for(int j = 0; j < 10; j++){
-
-    if(digitalRead(p9[j]) == HIGH and j==2 and j==x){
-      salidaMiswirej24p9(x+1, j+1, puntas);
-      errores=errores+1;
-    }
-    if(digitalRead(p9[j]) == HIGH and j==3 and j==x){
-      salidaMiswirej24p9(x+1, j+1, puntas);
-      errores=errores+1;
-    }
-    if(digitalRead(p9[j]) == HIGH and j==7 and j==x){
-      salidaMiswirej24p9(x+1, j+1, puntas);
-      errores=errores+1;
-    }
-    if(digitalRead(p9[j]) == HIGH and j==8 and j==x){
-      salidaMiswirej24p9(x+1, j+1, puntas);
-      errores=errores+1;
-    }
-    
-    if(digitalRead(p9[j]) == HIGH and j!=x){
-      
-           if(x!=4 and x!=5 and j==4 or j==5){
-              switch(j){
-                case 4:
-                  if(analogRead(p9[4]) > 995){
-                    salidaMiswirej24p9(x+1, 5, puntas);
-                  }
-                  break;
-                case 5:
-                if(analogRead(p9[5]) > 995){
-                  salidaMiswirej24p9(x+1, 6, puntas);
-                }
-                break;
-              }
-            }
-
-            else if(x==4 and j==5 or x==5 and j==4){
-              switch(x){
-                case 4:
-                  if(analogRead(p9[5]) > 995){
-                    salidaMiswirej24p9(x+1, 6, puntas);
-                  }
-                  break;
-                case 5:
-                if(analogRead(p9[4]) > 995){
-                  salidaMiswirej24p9(x+1, 5, puntas);
-                }
-                break;
-              }
-            }
-            else{
-              salidaMiswirej24p9(x+1, j+1, puntas);
-            }
-            
-    }
-    
-  }
-
-  
-  
+      break;
  
-   
-    
-    for(int k = 0; k < 10; k++){
-      pinMode(j24[k], OUTPUT);
-      digitalWrite(j24[k], LOW);
     }
-}
-
-
-void misBSj24p9(int puntas){
-  for(int i = 0; i < 10; i++){
-    pinMode(j24[i], OUTPUT);
-    digitalWrite(j24[i], LOW);
-    pinMode(j24[i], INPUT);
-    }
-        
-    pinMode(j24[9], OUTPUT);
-    digitalWrite(j24[9], HIGH);
-    
-    if(digitalRead(p9[6]) == HIGH or digitalRead(p9[9]) == HIGH){
-      misi = misi + 1;
-       }
-    
-    digitalWrite(j24[9], LOW);
-    pinMode(j24[9], INPUT);
-    pinMode(j24[6], OUTPUT);
-    digitalWrite(j24[6], HIGH);
-          
-    if(digitalRead(p9[6]) == HIGH or digitalRead(p9[9]) == HIGH){
-      misito = misito + 1;
-       }
-       
-     digitalWrite(j24[6], LOW);
-          
-    if(misi == 1 and misito == 0){
-      for(int i = 0; i < 10; i++){
-        if(i!= 6 and i!=9){
-          
-          pinMode(j24[i], OUTPUT);
-          digitalWrite(j24[i], HIGH);
-         }
-              
-       
-          if(digitalRead(p9[6]) == HIGH or digitalRead(p9[9]) == HIGH){
-             if(puntas==3){
-              Serial.print(F("MISWIRE J24 ")); Serial.print(i+1);
-             }
-             else if(puntas==2){
-              Serial.print(F("MISWIRE J15 ")); Serial.print(i+1);
-             }
-             Serial.println(F(" - 7 ")); 
-             errores=errores+1;
-             delay(125); 
-          }
-          
-          digitalWrite(j24[i], LOW);
-          digitalWrite(j24[i], INPUT);
-        
-        }
-        
-        misi = 0;
-        misito = 0;
-      }
-          
-      else if(misi == 0 and misito == 1){
-        pinMode(j24[6], INPUT);
-        for(int i = 0; i < 9; i++){
-          if(i!= 6 and i!=9){
-            pinMode(j24[i], OUTPUT);
-            digitalWrite(j24[i], HIGH);
-           }
-              
-           if(digitalRead(p9[6]) == HIGH or digitalRead(p9[7]) == HIGH){
-             if(puntas==3){
-              Serial.print(F("MISWIRE J24 ")); Serial.print(i+1);
-             }
-             else if(puntas==2){
-              Serial.print(F("MISWIRE J15 ")); Serial.print(i+1);
-             }
-             Serial.println(F(" - BS ")); 
-             errores=errores+1;
-             delay(125);
-            }
-            
-           digitalWrite(j24[i], LOW);
-           digitalWrite(j24[i], INPUT);
-            
-         }
-         
-         misi = 0;
-         misito = 0;
-       
-       }
-
-       else if(misi ==0 and misito == 0){
-        for(int i = 0; i < 10; i++){
-          if(i!= 6 and i!=9){
-            pinMode(j24[i], OUTPUT);
-            digitalWrite(j24[i], HIGH);
-           }
-              
-          if(digitalRead(p9[6]) == HIGH or digitalRead(p9[9]) == HIGH){
-             if(puntas==3){
-              Serial.print(F("MISWIRE J24 ")); Serial.print(i+1);
-              Serial.println(F(" CON P4: 7 errores BS ")); 
-             }
-             else if(puntas==2){
-              Serial.print(F("MISWIRE J15 ")); Serial.print(i+1);
-              Serial.println(F(" CON P15: 7 errores BS ")); 
-             }
-             errores=errores+1;
-             delay(125);
-           }
-           
-           digitalWrite(j24[i], LOW);
-           pinMode(j24[i], INPUT);
-        }
-        
-        
-        
-       }
-       misi = 0;
-       misito = 0;
-       
-       for(int k = 0; k < 10; k++){
-        pinMode(j24[k], OUTPUT);
-        digitalWrite(j24[k], LOW);
-        }   
-}
-
-
-
-void aprobadoj24p9(int puntas){ //Función que dice si aprueba o no el esnamblaje
-  for(int i = 0; i < 10; i++){
-    digitalWrite(j24[i], LOW);
   }
   
-  conexionesCorrectas=0;
   
-  for(int j = 0; j < 10; j++){
-    digitalWrite(j24[j],HIGH);
-    if(digitalRead(p9[j] == HIGH)){
-      if(errores==0){
-        if(j!= 2 and j!= 3 and j!= 7 and j!= 8){
-          conexionesCorrectas = conexionesCorrectas + 1;
-        }
-       }
-      digitalWrite(j24[j],LOW);
-    }
-   }
- 
-  if(conexionesCorrectas == 6){
-    if(puntas==3){
-      Serial.println(F("CONEXION J24 - P9 APROBADA :)"));
-    }
-    else if(puntas==2){
-      Serial.println(F("CONEXION J15 - P15 APROBADA :)"));
-    }
-    delay(125);  
-    Serial.println();
-    ensambleAprobado = ensambleAprobado + 1;
-    delay(125);
-  }
-  else{
-    if(puntas==3){
-      Serial.println(F("CONEXION J24 - P9 DEFECTUOSA :("));
-    }
-    else if(puntas==2){
-      Serial.println(F("CONEXION J15 - P15 DEFECTUOSA :("));
-    }
-    delay(125);  
-    Serial.println();
-    fallo = fallo + 1;  
-    delay(125);  
-  }
-  conexionesCorrectas = 0;
-  errores = 0;
-}
-
-
-void salidasMinij24p9(int o, int puntas){
-  opj24p9[o-1] = opj24p9[o-1] + 2;
-  if(o!=10){
-    if(puntas==3){
-      Serial.print(F("OPEN J24: POSICION ")); Serial.println(o);
-    }
-    else if(puntas==2){
-      Serial.print(F("OPEN J15: POSICION ")); Serial.println(o);
-    }
-  }
-  else{
-    if(puntas==3){
-      Serial.println(F("OPEN J24 EN BS"));
-    }
-    else if(puntas==2){
-      Serial.println(F("OPEN J15 EN BS"));
-    }
-  }
-  errores=errores+1;
-  delay(125);
-}
-
-
-void openSalidaj24p9(int puntas){
-  openS = 0;
-  for(int i = 0; i < 10; i++){
-    digitalWrite(j24[i], LOW);
-    pinMode(j24[i], INPUT);
- }
-    openS = 0;
- 
-  for(int k =0; k < 10; k++){
-    pinMode(j24[k], OUTPUT);
-    digitalWrite(j24[k], HIGH);
-    for(int j = 0; j < 10; j++){
-      if(digitalRead(p9[j]) == LOW){
-        openS = openS + 1;
-      }
-    }
-    
-      if(openS == 10){
-        switch(k){
-      
-        
-        case 0:
-            salidasMinij24p9(1, puntas);
-          break;
-        case 1:
-            salidasMinij24p9(2, puntas);
-          break;
-        case 4:
-            salidasMinij24p9(5, puntas);
-          break;
-        case 5:
-            salidasMinij24p9(6, puntas);
-          break;
-        case 6:
-            salidasMinij24p9(7, puntas);
-          break;
-        case 9:
-            salidasMinij24p9(10, puntas);
-          break;
-        }
-      }
-       
-      openS = 0;
-      digitalWrite(j24[k], LOW);
-      pinMode(j24[k], INPUT);
-  }
-  for(int i = 0; i < 10; i++){
-  pinMode(j24[i], OUTPUT);
- }
-
-}
-
-
-void resistenciaj24p9(){
-  for(int k = 0; k < 10; k++){
-    digitalWrite(j24[k], LOW);
-    pinMode(j24[k], INPUT);
-    
-    pinMode(p9[k], INPUT);
-  }
-
-  pinMode(p9[4], OUTPUT);
-  digitalWrite(p9[4], HIGH);
   
-    if(analogRead(p9[5]) > 95 and analogRead(p9[5]) < 1024){
-     resistenciaD = resistenciaD + 1;
-    }
-
-
-   digitalWrite(p9[4], LOW);
-   pinMode(p9[4], INPUT);  
-   pinMode(p9[5], OUTPUT);
-   digitalWrite(p9[5], HIGH);
-
-  
-    if(analogRead(p9[4]) > 95 and analogRead(p9[4]) < 1024){
-     resistenciaD = resistenciaD + 1;
-     arr[12] = "DETECTED";
-    }
-    
-    digitalWrite(p9[5], LOW);
-    pinMode(p9[5], INPUT);
- 
-
-
-  if(resistenciaD < 2){
-    arr[12] = "NOT DETECTED";
-    Serial.println(F("RESISTENCIA NO DETECTADA EN P9: 5 - 6"));
-    errores=errores+1;
-    delay(125);
-  }
-  
-  resistenciaD=0;
-  for(int k = 0; k < 10; k++){
-    pinMode(j24[k], OUTPUT);
-  }
-      
-}
-
-/**
- * 
- * 
- * 
- * 
- * BLOQUE DE CÓDIGO PARA CONEXIÓN P9--P4 (CONECTOR 2 Y CONECTOR 1)
- * 
- * 
- * 
- * 
- */
-
-void continuidadp9p4(){ //Función que detecta si existe la conexión de las puntas P9 -- P4
-  
-  //pines = 0;
-  for(int i = 0; i < 10; i++){
-    digitalWrite(p9[i], HIGH);
-  }
-  for(int j = 0; j < 10; j++){
-    if (digitalRead(p4[j]) == HIGH){
-        pines = pines + 1;
-      
-    }
-  }
-  for(int a = 0; a < 10; a++){
-        digitalWrite(p9[a], LOW);
-      }
-
-
-  
-  if (pines == 0){
-    Serial.println(F("NO HAY ENSAMBLE CONECTADO P9 - P4"));
-    Serial.println();
-    delay(125); //Tiempo de muestreo
-    noConectado = noConectado + 1;
-    fallo = fallo + 1;
-  }
-  else{
-    openEntradap9p4();
-    openSalidap9p4();
-    llamarMiswirep9p4();
-    misBSp9p4();
-    for(int k = 0; k < 6; k++){
-    pinMode(j24[k], INPUT);
-    pinMode(p9[k], OUTPUT);
-  }
-    resistenciaj24p9();
-    for(int k = 0; k < 6; k++){
-    pinMode(j24[k], INPUT);
-    pinMode(p9[k], OUTPUT);
-  }
-    
-    aprobadop9p4();
-  }
-  pines = 0;
-}
-
-
-void llamarMiswirep9p4(){ //Función que manda posición por posición y detecta si existe algún Miswire a través de la función "misWire"
-  for(int j = 0; j < 10; j++){
-        misWirep9p4(j);
-      }
-}
-void salidasOpenEntradap9p4(int p){ //Función que imprime los open detectados del Conector 1 (P4) en P9--P4
-  //delay(750);
-  opp9p4[p-1] = opp9p4[p-1] + 1;
- 
-  if(p!=10){
-    Serial.print(F("OPEN P4: POSICION ")); Serial.println(p);
-  }
-  else{
-    Serial.println(F("OPEN P4 EN BS"));
-  }
-  errores = errores + 1;
-  delay(125);
-}
-
-void salidaMiswirep9p4(int x, int z){ //Función que imprime los miswire detectados de la conexión P9 -- P4. "X" corresponde a P9(Conector 2) y "Z" a P4(Conector 1)
-  
-  if(z==5 or z==6 or z==3 or z==4 or z==9 or x==3 or x==4 or x==9){ //Dependiendo el GAP aquí es donde se cambia z==5 or z==6 or z ==3 or z==4 or z==8 or z==9
-    misOp9p4[x-1] = 1;
-    misIp9p4[z-1] = 1;
-    
-    Serial.print(F("CONEXION P9 "));
-      
-    if(x!=10){
-      Serial.print(x);
-    }
-    else{
-      Serial.print(bs);
-    }
-    
-    Serial.print(F(" - P4 "));
-    if(z!=10){
-      Serial.print(z);
-    }
-    else{
-      Serial.print(bs);
-    }
-    Serial.println(F(" NO DEBE CONECTARSE")); 
-    errores=errores+1;
-    delay(125);
-  }
-  else if(x == z){
-    
-  }
-  else if(x==7 and z ==10){
-    
-  }
-  else if(x==10 and z==7){  
-  
-  }
-  else{
-  misOp9p4[x-1] = 1;
-  misIp9p4[z-1] = 1;  
-  Serial.print("MISWIRE: ");
-  
-  if(x!=10){
-    Serial.print(x);
-  }
-  else{
-    Serial.print(bs);
-  }
-  
-  Serial.print(F(" Y "));
-  
-  if(z!=10){
-    Serial.print(z);
-  }
-  else{
-    Serial.print(bs);
-  }
-  Serial.println(F(" P9 -- P4 :("));
-  errores=errores+1;
-  delay(125);
-  }
-}
-
-
-void openEntradap9p4(){ //Función que detecta los open del Conector 1 (P4) en la conexión P9--P4
-  for(int j =0; j < 10; j++){
-    digitalWrite(p9[j], HIGH);
-  }
-  for(int i = 0; i < 10; i++){
-    //contador = 0; 
-    switch(i){
-      case 0:
-        //verifica = lecturaEntrada(0);
-        if (digitalRead(p4[0]) == LOW){
-          salidasOpenEntradap9p4(1); 
-          //errores = errores + 1;                
-        }
-        break;
+  if(conexionesIncorrectas == 0 and resist == 0){
+    conexionesCorrectas = conexionesCorrectas + 1;
+    switch(conexiones){
       case 1:
-        if (digitalRead(p4[1]) == LOW){
-          salidasOpenEntradap9p4(2);   
-          //errores = errores + 1;                                           
-        }
-        break; 
-      case 6:
-        if (digitalRead(p4[6]) == LOW){
-          salidasOpenEntradap9p4(7);   
-          //errores = errores + 1;                                           
-        }
+        Serial.println(F("CONEXION J24-P4 APROBADA :)"));
         break;
-      case 7:
-        if (digitalRead(p4[7]) == LOW){
-          salidasOpenEntrada(8);   
-          //errores = errores + 1;                                           
-        }
+      case 2:
+        Serial.println(F("CONEXION J24-P9 APROBADA :)"));
         break;
-      case 9:
-        if (digitalRead(p4[9]) == LOW and i!=6){
-          salidasOpenEntradap9p4(10);   
-          //errores = errores + 1;                                           
-        }
-        break;           
-     }
-   }
-   for(int a = 0; a < 10; a++){
-        digitalWrite(p9[a], LOW);
-      }
-}
-
-
-
-void misWirep9p4(int x){ //Función que detecta los miswire en la conexión P9--P4. "X" es la posición en P9
-
-
-  for(int i = 0; i < 10; i++){
-    if(i==x){
-      pinMode(p9[x], OUTPUT);
-      digitalWrite(p9[x], HIGH);
+      case 3:
+        Serial.println(F("CONEXION P9-P4 APROBADA :)"));
+        break;
+      case 4:
+        Serial.println(F("CONEXION J15-15 APROBADA :)"));
+        break;
     }
-    else{
-      digitalWrite(p9[i], LOW);
-      pinMode(p9[i], INPUT);
-    }
-  }
-
-  for(int j = 0; j < 10; j++){
-
-    if(digitalRead(p4[j]) == HIGH and j==2 and j==x){
-      salidaMiswirep9p4(x+1, j+1);
-      errores=errores+1;
-    }
-    if(digitalRead(p4[j]) == HIGH and j==3 and j==x){
-      salidaMiswirep9p4(x+1, j+1);
-      errores=errores+1;
-    }
-    if(digitalRead(p4[j]) == HIGH and j==4 and j==x){
-      salidaMiswirep9p4(x+1, j+1);
-      errores=errores+1;
-    }
-    if(digitalRead(p4[j]) == HIGH and j==5 and j==x){
-      salidaMiswirep9p4(x+1, j+1);
-      errores=errores+1;
-    }
-
-    if(digitalRead(p4[j]) == HIGH and j==8 and j==x){
-      salidaMiswirep9p4(x+1, j+1);
-      errores=errores+1;
-    }
-    
-    if(digitalRead(p4[j]) == HIGH and j!=x){
-        salidaMiswirep9p4(x+1, j+1);
-    }
-    
-   
-  }
-
-    
-    for(int k = 0; k < 10; k++){
-      pinMode(p9[k], OUTPUT);
-      digitalWrite(p9[k], LOW);
-    }
-}
-
-void misBSp9p4(){ //Función que detecta los posibles miswire de las posiciones 7 y BS que no fueron detectados anteriormente
-  for(int i = 0; i < 10; i++){
-    pinMode(p9[i], OUTPUT);
-    digitalWrite(p9[i], LOW);
-    pinMode(p9[i], INPUT);
-    }
-        
-    pinMode(p9[9], OUTPUT);
-    digitalWrite(p9[9], HIGH);
-    
-    if(digitalRead(p4[6]) == HIGH or digitalRead(p4[9]) == HIGH){
-      misi = misi + 1;
-       }
-    
-    digitalWrite(p9[9], LOW);
-    pinMode(p9[9], INPUT);
-    pinMode(p9[6], OUTPUT);
-    digitalWrite(p9[6], HIGH);
-          
-    if(digitalRead(p4[6]) == HIGH or digitalRead(p4[9]) == HIGH){
-      misito = misito + 1;
-       }
-       
-     digitalWrite(p9[6], LOW);
-          
-    if(misi == 1 and misito == 0){
-      for(int i = 0; i < 10; i++){
-        if(i!= 6 and i!=9){
-          pinMode(p9[i], OUTPUT);
-          digitalWrite(p9[i], HIGH);
-         }
-              
-         if(digitalRead(p4[6]) == HIGH or digitalRead(p4[9]) == HIGH){ 
-           Serial.print(F("MISWIRE P9 ")); Serial.print(i+1);
-           Serial.println(F(" - 7"));
-           errores=errores+1;
-           delay(125);
-         }
-          
-          digitalWrite(p9[i], LOW);
-        
-        }
-        
-        misi = 0;
-        misito = 0;
-      }
-          
-      else if(misi == 0 and misito == 1){
-        pinMode(p9[6], INPUT);
-        for(int i = 0; i < 10; i++){
-          if(i!= 6 and i!=9){
-            pinMode(p9[i], OUTPUT);
-            digitalWrite(p9[i], HIGH);
-           }
-              
-          if(digitalRead(p4[6]) == HIGH or digitalRead(p4[9]) == HIGH){ 
-           Serial.print(F("MISWIRE P9 ")); Serial.print(i+1);
-           Serial.println(F(" - BS"));
-           errores=errores+1;
-           delay(125);
-          }
-            
-           digitalWrite(p9[i], LOW);
-            
-         }
-         
-         misi = 0;
-         misito = 0;
-       
-       }
-
-       else if(misi ==0 and misito == 0){
-        for(int i = 0; i < 10; i++){
-          if(i!= 6 and i!=9){
-            pinMode(p9[i], OUTPUT);
-            digitalWrite(p9[i], HIGH);
-           }
-              
-          if(digitalRead(p4[6]) == HIGH or digitalRead(p4[9]) == HIGH){
-           Serial.print(F("MISWIRE DE P9 ")); Serial.print(i+1);
-           Serial.println(F(" CON P4: 7 Y BS"));
-           errores=errores+1; 
-           delay(125);  
-          }
-           
-           digitalWrite(p9[i], LOW);
-           pinMode(p9[i], INPUT);
-        }
-        
-        
-        
-       }
-       misi = 0;
-       misito = 0;
-       
-       for(int k = 0; k < 10; k++){
-        pinMode(p9[k], OUTPUT);
-        digitalWrite(p9[k], LOW);
-        }   
-}
-
-
-
-
-void aprobadop9p4(){ //Función que evalua si la conexión P9--P4 pasó o no pasó
-  for(int i = 0; i < 10; i++){
-    digitalWrite(p9[i], LOW);
-  }
-  conexionesCorrectas=0;
-    for(int j = 0; j < 10; j++){
-      digitalWrite(p9[j],HIGH);
-      if(digitalRead(p9[j] == HIGH)){
-        if(errores==0){
-          if(j != 4 && j != 5 and j!=2 and j!=3 and j!=8){
-          conexionesCorrectas = conexionesCorrectas + 1;
-          }
-          
-        }
-      digitalWrite(p9[j],LOW);
-    }
-   }
-  
-  if(conexionesCorrectas == 5){
-    Serial.println(F("CONEXION P9 - P4 APROBADA :)"));
-    delay(125);
     Serial.println();
-    delay(125);
-    ensambleAprobado = ensambleAprobado + 1;
+    delay(25);
   }
   else{
-    Serial.println(F("CONEXION P9 - P4 DEFECTUOSA :("));
-    delay(125);
-    Serial.println();
-    delay(125);
-    fallo = fallo + 1;
-
-  }
-  conexionesCorrectas = 0;
-  errores = 0;
-}
-
-
-
-void salidasMinip9p4(int o){ //Función que imprime los open detectados del Conector 2 (P9) en P9--P4
-  opp9p4[o-1] = opp9p4[o-1] + 2;
-  
-  if(o!=10){
-    Serial.print(F("OPEN P9: POSICION ")); Serial.println(o);
-  }
-  else{
-    Serial.println(F("OPEN P9 EN BS"));
-  }
-  errores=errores+1;
-  delay(125);
-}
-
-
-
-void openSalidap9p4(){ //Función que detecta los open del Conector 2 (P9) en la conexión P9--P4
-  openS = 0;
- for(int i = 0; i < 10; i++){
-  digitalWrite(p9[i], LOW);
-  pinMode(p9[i], INPUT);
- }
-  for(int k =0; k < 10; k++){
-    pinMode(p9[k], OUTPUT);
-    digitalWrite(p9[k], HIGH);
-   // pinMode(j24[1], INPUT);
-    for(int j = 0; j < 10; j++){
-      if(digitalRead(p4[j]) == LOW){
-        openS = openS + 1;
-      }
-    }
-    openR=0; //*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-**-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
-    for(int j = 0; j < 10; j++){
-      if(j!=k and digitalRead(p9[j]) == LOW and j!=4 and j!=5){
-        openR = openR + 1;
-      }
-      else if(j==4 and analogRead(p9[j]) < 95){
-        openR = openR + 1;
-      }
-      else if(j==5 and analogRead(p9[j]) < 95){
-        openR = openR + 1;
-      }
-       
-    }
-    
-      switch(k){
-        
-      case 0:
-        if(openS==10 and openR == 9){
-          salidasMinip9p4(1);
-        }
-        break;
+    switch(conexiones){
       case 1:
-        if(openS==10 and openR == 9){
-          salidasMinip9p4(2);
-        }
+        Serial.println(F("CONEXION J24-P4 DEFECTUOSA :("));
         break;
-      case 6:
-        if(openS==10){
-          salidasMinip9p4(7);
-        }
+      case 2:
+        Serial.println(F("CONEXION J24-P9 DEFECTUOSA :("));
         break;
-      case 7:
-        if(openS==10 and openR==9){
-          salidasMinip9p4(7);
-        }
+      case 3:
+        Serial.println(F("CONEXION P9-P4 DEFECTUOSA :("));
         break;
-      case 9:
-        if(openS==10){
-          salidasMinip9p4(10);
-        }
+      case 4:
+        Serial.println(F("CONEXION J15-15 DEFECTUOSA :("));
         break;
-      }
-       
-      openS = 0;
-      openR = 0;
-      digitalWrite(p9[k], LOW);
-      pinMode(p9[k], INPUT);
+    }
+    Serial.println();
+    delay(25);
   }
-  for(int i = 0; i < 10; i++){
-  pinMode(p9[i], OUTPUT);
- }
 
+  //Serial.println(conexionesIncorrectas);
+  //delay(125);
+  
+  for(int i = 0; i < 10; i++){
+    erroresOp[i] = 0;
+    erroresMis[i] = 0;
+  }
+  resist = 0;
+  conexionesIncorrectas = 0;
 }
 
+//*****************************************************************************************************
+
+void conexionBS(int conector[], int posicion){ // Función para comprobar la conexion entre 7-BS de un conector
+  
+  int vs = 0;
+  int vsM = 0;
+  entradas(conector);
+  
+  
+  pinMode(conector[6], OUTPUT);
+  digitalWrite(conector[6], HIGH);
+  delay(50);
+
+  if(digitalRead(conector[9]) == HIGH){
+    vs = vs + 1;
+  }
+
+  
+    if(vs == 1 and erroresMiswire[6] == 0 and erroresMiswire[9] == 0){
+      estados[posicion-1] = "PASSED";
+    }
+    else if((vs==0) and (erroresMiswire[6] == 0 and erroresMiswire[9] == 0)){
+      estados[posicion-1] = "OPEN";
+    }
+    else if((erroresOpen[6] == 0 and erroresOpen[9] == 0) and (erroresMiswire[6] != 0 or erroresMiswire[9] != 0)){
+      estados[posicion-1] = "MISWIRE";
+    }
+    else if((erroresOpen[6] != 0 or erroresOpen[9] != 0) and (erroresMiswire[6] != 0 and erroresMiswire[9] != 0)){
+      estados[posicion-1] = "OPEN & MISWIRE";
+    }
+ 
+}
+//*****************************************************************************************************
+
+void conexiones7(int conectorSalida[], int conectorEntrada[], int posicion){ // Función para comprobar la conexión entre Bs-7 entre 2 conectores
+  
+  int vs = 0;
+  int vsM = 0;
+  entradas(conectorEntrada);
+  salidas(conectorSalida);
+  
+  digitalWrite(conectorSalida[6], HIGH);
+
+  for(int r = 0; r < 10; r++){
+    if(r!=6){
+      if(digitalRead(conectorEntrada[r]) == HIGH and r==9){
+    
+      vs = vs + 100;
+    }
+    else if(digitalRead(conectorEntrada[r]) == HIGH and r!=9 and r!=6){
+      vs = vs + 1;
+    }
+  }
+  }
+  digitalWrite(conectorSalida[6], LOW);
+  entradas(conectorSalida);
+  
+  for(int r = 0; r < 10; r++){
+   if(r!= 9){
+    pinMode(conectorEntrada[r], OUTPUT);
+    if(r==6){
+      digitalWrite(conectorEntrada[6], HIGH);
+    }
+   }
+    
+
+    if(digitalRead(conectorSalida[r]) == HIGH and r!=9 and r!=6){
+      vsM = vsM + 1;
+    }
+    digitalWrite(conectorEntrada[r], LOW);
+    pinMode(conectorEntrada[r], INPUT);
+  }
+  
+    if(vs == 100){ //sin vsM
+      estados[posicion-1] = "PASSED";
+    }
+    else if(vs == 0 and vsM == 0){ //Sin vsM
+      estados[posicion-1] = "OPEN";
+    }
+    else if(vs != 0 and vs != 100){
+      estados[posicion-1] = "MISWIRE";
+    }
+    else if(vs == 0 and vsM != 0){
+      estados[posicion-1] = "OPEN & MISWIRE";
+    }
+ 
+}
+
+//*****************************************************************************************************
 
 
 
 
-/**
- * 
- * 
- * 
- * 
- * BLOQUE DE CÓDIGO PARA DETERMINAR EL ESTADO DE LAS CONEXIONES A ANALIZAR.CONEXIONES DEFINIDAS EN "sta2[]"
- * 
- * 
- * 
- * 
- */
+void rasp3Puntas(int conexiones){ // Función donde se almacenan los estados de las conexiones del ensamble de 3 puntas que es mandada la Raspberry Pi
 
-void rasp3(){
+  switch(conexiones){
+
+    case 1:
+      //CONEXION #1 ------------------------------------------------------------------------------------------------------------------------
+      if(erroresOpen[0] == 0 and erroresMiswire[0] == 0){
+        estados[0] = "PASSED";
+      }
+      else if(erroresOpen[0] > 0 and erroresMiswire[0] == 0){
+        estados[0] = "OPEN";
+      }
+      else if(erroresOpen[0] == 0 and erroresMiswire[0] > 0){
+        estados[0] = "MISWIRE";
+      }
+      else if(erroresOpen[0] > 0 and erroresMiswire[0] > 0){
+        estados[0] = "OPEN & MISWIRE";
+      }
+
+      //CONEXION #3 ------------------------------------------------------------------------------------------------------------------------
+      if(erroresOpen[1] == 0 and erroresMiswire[1] == 0){
+        estados[2] = "PASSED";
+      }
+      else if(erroresOpen[1] > 0 and erroresMiswire[1] == 0){
+        estados[2] = "OPEN";
+      }
+      else if(erroresOpen[1] == 0 and erroresMiswire[1] > 0){
+        estados[2] = "MISWIRE";
+      }
+      else if(erroresOpen[1] > 0 and erroresMiswire[1] > 0){
+        estados[2] = "OPEN & MISWIRE";
+      }
+
+      //CONEXION #5 ------------------------------------------------------------------------------------------------------------------------
+
+      conexionBS(conector1, 5);
+      
+
+      //CONEXION #6 ------------------------------------------------------------------------------------------------------------------------
+      conexiones7(conector3, conector1, 6);
+
+      //CONEXION #7 ------------------------------------------------------------------------------------------------------------------------
+
+      conexionBS(conector3, 7);
+
+      break;
+    case 2:
+      //CONEXION #2 ------------------------------------------------------------------------------------------------------------------------
+      if(erroresOpen[0] == 0 and erroresMiswire[0] == 0){
+        estados[1] = "PASSED";
+      }
+      else if(erroresOpen[0] > 0 and erroresMiswire[0] == 0){
+        estados[1] = "OPEN";
+      }
+      else if(erroresOpen[0] == 0 and erroresMiswire[0] > 0){
+        estados[1] = "MISWIRE";
+      }
+      else if(erroresOpen[0] > 0 and erroresMiswire[0] > 0){
+        estados[1] = "OPEN & MISWIRE";
+      }
+
+      //CONEXION #4 ------------------------------------------------------------------------------------------------------------------------
+      if(erroresOpen[1] == 0 and erroresMiswire[1] == 0){
+        estados[3] = "PASSED";
+      }
+      else if(erroresOpen[1] > 0 and erroresMiswire[1] == 0){
+        estados[3] = "OPEN";
+      }
+      else if(erroresOpen[1] == 0 and erroresMiswire[1] > 0){
+        estados[3] = "MISWIRE";
+      }
+      else if(erroresOpen[1] > 0 and erroresMiswire[1] > 0){
+        estados[3] = "OPEN & MISWIRE";
+      }
+
+      //CONEXION #7 ------------------------------------------------------------------------------------------------------------------------
+
+      conexionBS(conector3, 7);
+
+      //CONEXION #8 ------------------------------------------------------------------------------------------------------------------------
+      conexiones7(conector3, conector2, 8);
+
+      //CONEXION #9 ------------------------------------------------------------------------------------------------------------------------
+
+      conexionBS(conector2, 9);
+
+      //CONEXION #11 ------------------------------------------------------------------------------------------------------------------------
+      if(erroresOpen[4] == 0 and erroresMiswire[4] == 0){
+        estados[10] = "PASSED";
+      }
+      else if(erroresOpen[4] > 0 and erroresMiswire[4] == 0){
+        estados[10] = "OPEN";
+      }
+      else if(erroresOpen[4] == 0 and erroresMiswire[4] > 0){
+        estados[10] = "MISWIRE";
+      }
+      else if(erroresOpen[4] > 0 and erroresMiswire[4] > 0){
+        estados[10] = "OPEN & MISWIRE";
+      }
+
+      //CONEXION #12 ------------------------------------------------------------------------------------------------------------------------
+      if(erroresOpen[5] == 0 and erroresMiswire[5] == 0){
+        estados[11] = "PASSED";
+      }
+      else if(erroresOpen[5] > 0 and erroresMiswire[5] == 0){
+        estados[11] = "OPEN";
+      }
+      else if(erroresOpen[5] == 0 and erroresMiswire[5] > 0){
+        estados[11] = "MISWIRE";
+      }
+      else if(erroresOpen[5] > 0 and erroresMiswire[5] > 0){
+        estados[11] = "OPEN & MISWIRE";
+      }
+      break;
+    case 3:
+
+      //CONEXION #5 ------------------------------------------------------------------------------------------------------------------------
+
+      conexionBS(conector1, 5);
+
+      //CONEXION #9 ------------------------------------------------------------------------------------------------------------------------
+
+      conexionBS(conector2, 9);
+
+      
+      //CONEXION #10 ------------------------------------------------------------------------------------------------------------------------
+      if(erroresOpen[7] == 0 and erroresMiswire[7] == 0){
+        estados[9] = "PASSED";
+      }
+      else if(erroresOpen[7] > 0 and erroresMiswire[7] == 0){
+        estados[9] = "OPEN";
+      }
+      else if(erroresOpen[7] == 0 and erroresMiswire[7] > 0){
+        estados[9] = "MISWIRE";
+      }
+      else if(erroresOpen[7] > 0 and erroresMiswire[7] > 0){
+        estados[9] = "OPEN & MISWIRE";
+      }
+      break;
+     
+  }
+  
+}
+
+//*****************************************************************************************************
+
+void rasp2Puntas(){ // Función donde se almacenan los estados de las conexiones del ensamble de 2 puntas que es mandada la Raspberry Pi
   //CONEXION #1 ------------------------------------------------------------------------------------------------------------------------
-  if(op[0] == 0 and misO[0] == 0 and misI[0] == 0){
-    arr[0] = "PASSED";
-  }
-  else if(op[0] > 0 and misO[0] == 0 and misI[0] == 0){
-    arr[0] = "OPEN";
-  }
-  else if(op[0] == 0 and misO[0] == 1 or misI[0] == 1){
-    arr[0] = "MISWIRE";
-  }
-  else if(op[0] > 0 and (misO[0] == 1 or misI[0] == 1)){
-    arr[0] = "OPEN & MISWIRE";
-  }
-
-  //CONEXION #2 ------------------------------------------------------------------------------------------------------------------------
-  if(opj24p9[0] == 0 and misOj24p9[0] == 0 and misIj24p9[0] == 0){
-    arr[1] = "PASSED";
-  }
-  else if(opj24p9[0] > 0 and misOj24p9[0] == 0 and misIj24p9[0] == 0){
-    arr[1] = "OPEN";
-  }
-  else if(opj24p9[0] == 0 and misOj24p9[0] == 1 or misIj24p9[0] == 1){
-    arr[1] = "MISWIRE";
-  }
-  else if(opj24p9[0] > 0 and (misOj24p9[0] == 1 or misIj24p9[0] == 1)){
-    arr[1] = "OPEN & MISWIRE";
-  }
-
-  //CONEXION #3 ------------------------------------------------------------------------------------------------------------------------
-  if(op[1] == 0 and misO[1] == 0 and misI[1] == 0){
-    arr[2] = "PASSED";
-  }
-  else if(op[1] > 0 and misO[1] == 0 and misI[1] == 0){
-    arr[2] = "OPEN";
-  }
-  else if(op[1] == 0 and misO[1] == 1 or misI[1] == 1){
-    arr[2] = "MISWIRE";
-  }
-  else if(op[1] > 0 and (misO[1] == 1 or misI[1] == 1)){
-    arr[2] = "OPEN & MISWIRE";
-  }
-
-  //CONEXION #4 ------------------------------------------------------------------------------------------------------------------------
-  if(opj24p9[1] == 0 and misOj24p9[1] == 0 and misIj24p9[1] == 0){
-    arr[3] = "PASSED";
-  }
-  else if(opj24p9[1] > 0 and misOj24p9[1] == 0 and misIj24p9[1] == 0){
-    arr[3] = "OPEN";
-  }
-  else if(opj24p9[1] == 0 and misOj24p9[1] == 1 or misIj24p9[1] == 1){
-    arr[3] = "MISWIRE";
-  }
-  else if(opj24p9[1] > 0 and (misOj24p9[1] == 1 or misIj24p9[1] == 1)){
-    arr[3] = "OPEN & MISWIRE";
-  }
-
-  //CONEXION #5 ------------------------------------------------------------------------------------------------------------------------
-  for(int r = 0; r < 10; r++){
-    pinMode(j24[r], INPUT);
-    pinMode(p9[r], INPUT);
-    pinMode(p4[r], INPUT);
-  }
-  pinMode(p4[6], OUTPUT);
-  digitalWrite(p4[6], HIGH);
-
-  for(int r = 0; r < 10; r++){
-    if(r!=6){
-      if(digitalRead(p4[r]) == HIGH and r==9){
-    
-      vs = vs + 100;
-    }
-    else if(digitalRead(p4[r]) == HIGH and r!=9){
-      vs = vs + 1;
-    }
-  }
-  }
-  digitalWrite(p4[6], LOW);
-  pinMode(p4[6], INPUT);
-  
-  for(int r = 0; r < 10; r++){
-   if(r!= 9){
-    pinMode(p4[r], OUTPUT);
-    digitalWrite(p4[6], HIGH);
-   }
-    
-
-    if(digitalRead(p4[9]) == HIGH and r!=6){
-      vsM = vsM + 1;
-    }
-    digitalWrite(p4[r], LOW);
-    pinMode(p4[r], INPUT);
-  }
-  if(vs == 100){
-    arr[4] = "PASSED";
-  }
-  else if(vs == 0){
-    arr[4] = "OPEN";
-  }
-  else if(vs != 0 and vs != 100){
-    arr[4] = "MISWIRE";
-  }
-  else if(vs == 0 and vsM != 0){
-    arr[4] = "OPEN & MISWIRE";
-  }
-  /*Serial.println();
-  Serial.println(vs);
-  Serial.println(vsM);*/
-  vs = 0;
-  vsM = 0;
-
-  //CONEXION #6 ------------------------------------------------------------------------------------------------------------------------
-
-  if(op[9] == 0 and misO[9] ==0 and misI[9] == 0 and misO[6] == 0 and misI[6] == 0){
-    arr[5] = "PASSED";
-  }
-  else if(op[9] != 0 and misO[9] == 0 and misI[6] == 0 and misO[6] == 0 and misI[6] == 0){
-    arr[5] = "OPEN";
-  }
-  else if(op[9] == 0 and misO[9] == 1 or misI[9] == 1 or misO[6] == 1 or misI[6] == 1){
-    arr[5] = "MISWIRE";
-  }
-  else if(op[9] != 0 and (misO[9] == 1 or misI[9] == 1 or misO[6] == 1 or misI[6] == 1)){
-    arr[5] = "OPEN & MISWIRE";
-  }
-
-  //CONEXION #7 ------------------------------------------------------------------------------------------------------------------------
-  for(int r = 0; r < 10; r++){
-    pinMode(j24[r], INPUT);
-    pinMode(p9[r], INPUT);
-    pinMode(p4[r], INPUT);
-  }
-  pinMode(j24[6], OUTPUT);
-  digitalWrite(j24[6], HIGH);
-
-
-      if(digitalRead(j24[9]) == HIGH){
-    
-      vs = vs + 100;
+      if(erroresOpen[0] == 0 and erroresMiswire[0] == 0){
+        estados[0] = "PASSED";
       }
-    
+      else if(erroresOpen[0] > 0 and erroresMiswire[0] == 0){
+        estados[0] = "OPEN";
+      }
+      else if(erroresOpen[0] == 0 and erroresMiswire[0] > 0){
+        estados[0] = "MISWIRE";
+      }
+      else if(erroresOpen[0] > 0 and erroresMiswire[0] > 0){
+        estados[0] = "OPEN & MISWIRE";
+      }
+      
+      //CONEXION #2 ------------------------------------------------------------------------------------------------------------------------
+      if(erroresOpen[1] == 0 and erroresMiswire[1] == 0){
+        estados[1] = "PASSED";
+      }
+      else if(erroresOpen[1] > 0 and erroresMiswire[1] == 0){
+        estados[1] = "OPEN";
+      }
+      else if(erroresOpen[1] == 0 and erroresMiswire[1] > 0){
+        estados[1] = "MISWIRE";
+      }
+      else if(erroresOpen[1] > 0 and erroresMiswire[1] > 0){
+        estados[1] = "OPEN & MISWIRE";
+      }
+      
+      //CONEXION #3 ------------------------------------------------------------------------------------------------------------------------
+      conexionBS(conector1, 3);
 
-  digitalWrite(j24[6], LOW);
-  pinMode(j24[6], INPUT);
-  
-  if(vs == 100 and op[6]== 0 and op[9] == 0 and misI[6] == 0 and misO[6] ==0 and misI[9] == 0 and misO[9] == 0){
-    arr[6] = "PASSED";
-  }
-  else if((op[6] != 0 or op[9] !=0) and misI[6] == 0 and misO[6] ==0 and misI[9] == 0 and misO[9] == 0){
-    arr[6] = "OPEN";
-  }
-  else if(op[6] == 0 and op[9] ==0 and (misI[6] == 1 or misO[6] == 1 or misI[9] == 1 or misO[9] == 1)){
-    arr[6] = "MISWIRE";
-  }
-  else if(op[6] != 0 or op[9] !=0 and (misI[6] == 1 or misO[6] == 1 or misI[9] == 1 or misO[9] == 1)){
-    arr[6] = "OPEN & MISWIRE";
-  }
-  else{
-    arr[6] = "REVISAR";
-  }
+      
+      //CONEXION #4 ------------------------------------------------------------------------------------------------------------------------
+      
+      conexiones7(conector3, conector1, 4);
 
-  vs = 0;
-  vsM = 0;
-  
-  //CONEXION #8 ------------------------------------------------------------------------------------------------------------------------
+      //CONEXION #5 ------------------------------------------------------------------------------------------------------------------------
+      conexionBS(conector3, 5);
+}
 
-  if(opj24p9[9] == 0 and misOj24p9[9] ==0 and misIj24p9[9] == 0 and misOj24p9[6] == 0 and misIj24p9[6] == 0){
-    arr[7] = "PASSED";
-  }
-  else if(opj24p9[9] != 0 and misOj24p9[9] == 0 and misIj24p9[9] == 0 and misOj24p9[6] == 0 and misIj24p9[6] == 0){
-    arr[7] = "OPEN";
-  }
-  else if(opj24p9[9] == 0 and misOj24p9[9] == 1 or misIj24p9[9] == 1 or misOj24p9[6] == 1 or misIj24p9[6] == 1){
-    arr[7] = "MISWIRE";
-  }
-  else if(opj24p9[9] != 0 and (misOj24p9[9] == 1 or misIj24p9[9] == 1 or misOj24p9[6] == 1 or misIj24p9[6] == 1)){
-    arr[7] = "OPEN & MISWIRE";
-  }
+//*****************************************************************************************************
 
-  //CONEXION #9 ------------------------------------------------------------------------------------------------------------------------
-  for(int r = 0; r < 10; r++){
-    pinMode(j24[r], INPUT);
-    pinMode(p9[r], INPUT);
-    pinMode(p4[r], INPUT);
+void mandarDatos(int puntas, String conexionesEvaluadas[]){ // Función para mandar los datos e la Raspberry Pi
+  int resultados = 0;
+  int ciclo = 0;
+  switch(puntas){
+    case 2:
+      ciclo = 5;
+      break;
+    case 3:
+      ciclo = 13;
+      break;      
   }
-  pinMode(p9[6], OUTPUT);
-  digitalWrite(p9[6], HIGH);
-
-  for(int r = 0; r < 10; r++){
-    if(r!=6){
-      if(digitalRead(p9[r]) == HIGH and r==9){
-    
-      vs = vs + 100;
-    }
-    else if(digitalRead(p9[r]) == HIGH and r!=9){
-      vs = vs + 1;
-    }
-  }
-  }
-  digitalWrite(p9[6], LOW);
-  pinMode(p9[6], INPUT);
-  
-  for(int r = 0; r < 10; r++){
-   if(r!= 9){
-    pinMode(p9[r], OUTPUT);
-    digitalWrite(p9[6], HIGH);
-   }
-    
-
-    if(digitalRead(p9[9]) == HIGH and r!=6){
-      vsM = vsM + 1;
-    }
-    digitalWrite(p9[r], LOW);
-    pinMode(p9[r], INPUT);
-  }
-  if(vs == 100){
-    arr[8] = "PASSED";
-  }
-  else if(vs == 0){
-    arr[8] = "OPEN";
-  }
-  else if(vs != 0 and vs != 100){
-    arr[8] = "MISWIRE";
-  }
-  else if(vs == 0 and vsM != 0){
-    arr[8] = "OPEN & MISWIRE";
-  }
-
-  vs = 0;
-  vsM = 0;
-
-  //CONEXION #10 ------------------------------------------------------------------------------------------------------------------------*******************************
-  if(opp9p4[7] == 0 and misOp9p4[7] == 0 and misIp9p4[7] == 0){
-    arr[9] = "PASSED";
-  }
-  else if(opp9p4[7] > 0 and misOp9p4[7] == 0 and misIp9p4[7] == 0){
-    arr[9] = "OPEN";
-  }
-  else if(opp9p4[7] == 0 and misOp9p4[7] == 1 or misIp9p4[7] == 1){
-    arr[9] = "MISWIRE";
-  }
-  else if(opp9p4[7] > 0 and (misOp9p4[7] == 1 or misIp9p4[7] == 1)){
-    arr[9] = "OPEN & MISWIRE";
-  }
-
-  //CONEXION #11 ------------------------------------------------------------------------------------------------------------------------
-  if(opj24p9[4] == 0 and misOj24p9[4] == 0 and misIj24p9[4] == 0){
-    arr[10] = "PASSED";
-  }
-  else if(opj24p9[4] > 0 and misOj24p9[4] == 0 and misIj24p9[4] == 0){
-    arr[10] = "OPEN";
-  }
-  else if(opj24p9[4] == 0 and misOj24p9[4] == 1 or misIj24p9[4] == 1){
-    arr[10] = "MISWIRE";
-  }
-  else if(opj24p9[4] > 0 and (misOj24p9[4] == 1 or misIj24p9[4] == 1)){
-    arr[10] = "OPEN & MISWIRE";
-  }
-
-  //CONEXION #12 ------------------------------------------------------------------------------------------------------------------------
-  if(opj24p9[5] == 0 and misOj24p9[5] == 0 and misIj24p9[5] == 0){
-    arr[11] = "PASSED";
-  }
-  else if(opj24p9[5] > 0 and misOj24p9[5] == 0 and misIj24p9[5] == 0){
-    arr[11] = "OPEN";
-  }
-  else if(opj24p9[5] == 0 and misOj24p9[5] == 1 or misIj24p9[5] == 1){
-    arr[11] = "MISWIRE";
-  }
-  else if(opj24p9[5] > 0 and (misOj24p9[5] == 1 or misIj24p9[5] == 1)){
-    arr[11] = "OPEN & MISWIRE";
-  }
-
-  //CONEXION #12 ------------------------------------------------------------------------------------------------------------------------
-  //resistenciaj24p9()
-
-  //SERIAL PRINT ------------------------------------------------------------------------------------------------------------------------
-  while(resultados<13){
-    Serial.println(sta2[resultados] + arr[resultados]);
+  while(resultados<ciclo){
+    Serial.println(conexionesEvaluadas[resultados] + estados[resultados]);
     
     resultados = resultados + 1;
     delay(100);
   }
-  resultados = 0;
 
-  while(resultados<10){
-    op[resultados] = 0;
-    misO[resultados] = 0;
-    misI[resultados] = 0;
-    opj24p9[resultados] = 0;
-    misOj24p9[resultados] = 0;
-    misIj24p9[resultados] = 0;
-    opp9p4[resultados] = 0;
-    misOp9p4[resultados] = 0;
-    misIp9p4[resultados] = 0;
-
-    resultados = resultados + 1;
-  }
+//  Serial.println();
+//  Serial.println(conexionesCorrectas);
+//  Serial.println();
+//  delay(375);
   
   resultados = 0;
+  //conexionesCorrectas = 0;
+  //conexionesIncorrectas = 0;
+
   }
 
-  /**
- * 
- * 
- * 
- * 
- * BLOQUE DE CÓDIGO PARA DETERMINAR EL ESTADO DE LAS CONEXIONES A ANALIZAR.CONEXIONES DEFINIDAS EN "sta3[]"
- * 
- * 
- * 
- * 
- */
 
-void rasp2(){
-
-  //CONEXION #1 ------------------------------------------------------------------------------------------------------------------------
-  if(opj24p9[0] == 0 and misOj24p9[0] == 0 and misIj24p9[0] == 0){
-    arr[0] = "PASSED";
-  }
-  else if(opj24p9[0] > 0 and misOj24p9[0] == 0 and misIj24p9[0] == 0){
-    arr[0] = "OPEN";
-  }
-  else if(opj24p9[0] == 0 and misOj24p9[0] == 1 or misIj24p9[0] == 1){
-    arr[0] = "MISWIRE";
-  }
-  else if(opj24p9[0] > 0 and (misOj24p9[0] == 1 or misIj24p9[0] == 1)){
-    arr[0] = "OPEN & MISWIRE";
-  }
-
-  //CONEXION #2 ------------------------------------------------------------------------------------------------------------------------|||||||||||||||||||||||||||||
-  if(opj24p9[1] == 0 and misOj24p9[1] == 0 and misIj24p9[1] == 0){
-    arr[1] = "PASSED";
-  }
-  else if(opj24p9[1] > 0 and misOj24p9[1] == 0 and misIj24p9[1] == 0){
-    arr[1] = "OPEN";
-  }
-  else if(opj24p9[1] == 0 and misOj24p9[1] == 1 or misIj24p9[1] == 1){
-    arr[1] = "MISWIRE";
-  }
-  else if(opj24p9[1] > 0 and (misOj24p9[1] == 1 or misIj24p9[1] == 1)){
-    arr[1] = "OPEN & MISWIRE";
-  }
-
-  //CONEXION #3 ------------------------------------------------------------------------------------------------------------------------
-  for(int r = 0; r < 10; r++){
-    pinMode(j24[r], INPUT);
-    pinMode(p9[r], INPUT);
-    pinMode(p4[r], INPUT);
-  }
-  pinMode(p9[6], OUTPUT);
-  digitalWrite(p9[6], HIGH);
-
-  for(int r = 0; r < 10; r++){
-    if(r!=6){
-      if(digitalRead(p9[r]) == HIGH and r==9){
-    
-      vs = vs + 100;
-    }
-    else if(digitalRead(p9[r]) == HIGH and r!=9){
-      vs = vs + 1;
-    }
-  }
-  }
-  digitalWrite(p9[6], LOW);
-  pinMode(p9[6], INPUT);
+//*****************************************************************************************************
+void cable3Puntas(){ // Función para hacer pruebas en un ensamble de 3 puntas con RM80983
+  delay(375); //1250
+  continuidad(conector3, conector1, 1);
+  delay(50);
+  continuidad(conector3, conector2, 2);
+  delay(50);
+  continuidad(conector2, conector1, 3);
+  delay(50);
+  //Serial.println();
+  Serial.println(F("break"));
+  delay(250);
+  mandarDatos(3, conexiones3Puntas);
+  delay(50);
+  //Serial.println(conexionesCorrectas);
   
-  for(int r = 0; r < 10; r++){
-   if(r!= 9){
-    pinMode(p9[r], OUTPUT);
-    digitalWrite(p9[6], HIGH);
-   }
-    
-
-    if(digitalRead(p9[9]) == HIGH and r!=6){
-      vsM = vsM + 1;
-    }
-    digitalWrite(p9[r], LOW);
-    pinMode(p9[r], INPUT);
-  }
-  if(vs == 100){
-    arr[2] = "PASSED";
-  }
-  else if(vs == 0){
-    arr[2] = "OPEN";
-  }
-  else if(vs != 0 and vs != 100){
-    arr[2] = "MISWIRE";
-  }
-  else if(vs == 0 and vsM != 0){
-    arr[2] = "OPEN & MISWIRE";
-  }
-  /*Serial.println();
-  Serial.println(vs);
-  Serial.println(vsM);*/
-  vs = 0;
-  vsM = 0;
-
-  //CONEXION #4 ------------------------------------------------------------------------------------------------------------------------
-  for(int r = 0; r < 10; r++){
-    pinMode(j24[r], INPUT);
-    pinMode(p9[r], INPUT);
-    pinMode(p4[r], INPUT);
-  }
-  pinMode(j24[6], OUTPUT);
-  digitalWrite(j24[6], HIGH);
-
-
-      if(digitalRead(j24[9]) == HIGH){
-    
-      vs = vs + 100;
-      }
-    
-
-  digitalWrite(j24[6], LOW);
-  pinMode(j24[6], INPUT);
-  
-  if(vs == 100 and op[6]== 0 and op[9] == 0 and misI[6] == 0 and misO[6] ==0 and misI[9] == 0 and misO[9] == 0){
-    arr[3] = "PASSED";
-  }
-  else if((op[6] != 0 or op[9] !=0) and misI[6] == 0 and misO[6] ==0 and misI[9] == 0 and misO[9] == 0){
-    arr[3] = "OPEN";
-  }
-  else if(op[6] == 0 and op[9] ==0 and (misI[6] == 1 or misO[6] == 1 or misI[9] == 1 or misO[9] == 1)){
-    arr[3] = "MISWIRE";
-  }
-  else if(op[6] != 0 or op[9] !=0 and (misI[6] == 1 or misO[6] == 1 or misI[9] == 1 or misO[9] == 1)){
-    arr[3] = "OPEN & MISWIRE";
+  if(conexionesCorrectas == 3){
+    Serial.println(conexionesCorrectas);
+    digitalWrite(greenLed, HIGH);
+    delay(4000);
+    digitalWrite(greenLed, LOW);
   }
   else{
-    arr[3] = "REVISAR";
-  }
-
-  vs = 0;
-  vsM = 0;
-  
-  //CONEXION #5 ------------------------------------------------------------------------------------------------------------------------
-
-  if(opj24p9[9] == 0 and misOj24p9[9] ==0 and misIj24p9[9] == 0 and misOj24p9[6] == 0 and misIj24p9[6] == 0){
-    arr[4] = "PASSED";
-  }
-  else if(opj24p9[9] != 0 and misOj24p9[9] == 0 and misIj24p9[9] == 0 and misOj24p9[6] == 0 and misIj24p9[6] == 0){
-    arr[4] = "OPEN";
-  }
-  else if(opj24p9[9] == 0 and misOj24p9[9] == 1 or misIj24p9[9] == 1 or misOj24p9[6] == 1 or misIj24p9[6] == 1){
-    arr[4] = "MISWIRE";
-  }
-  else if(opj24p9[9] != 0 and (misOj24p9[9] == 1 or misIj24p9[9] == 1 or misOj24p9[6] == 1 or misIj24p9[6] == 1)){
-    arr[4] = "OPEN & MISWIRE";
-  }
-
-
-  //SERIAL PRINT ------------------------------------------------------------------------------------------------------------------------
-  while(resultados<5){
-    Serial.println(sta3[resultados] + arr[resultados]);
-
-    resultados = resultados + 1;
-    delay(100);
-  }
-  resultados = 0;
-
-  while(resultados<10){
-    op[resultados] = 0;
-    misO[resultados] = 0;
-    misI[resultados] = 0;
-    opj24p9[resultados] = 0;
-    misOj24p9[resultados] = 0;
-    misIj24p9[resultados] = 0;
-    opp9p4[resultados] = 0;
-    misOp9p4[resultados] = 0;
-    misIp9p4[resultados] = 0;
-
-    resultados = resultados + 1;
+    Serial.println(conexionesCorrectas);
+    digitalWrite(redLed, HIGH);
+    for(int b = 0; b < 4; b++){
+      digitalWrite(buz, HIGH);
+      delay(500);
+      digitalWrite(buz, LOW);
+      delay(500);
+    }
+    digitalWrite(redLed, LOW);
   }
   
-  resultados = 0;   
-
+  conexionesCorrectas = 0;
+  conexionesIncorrectas = 0;
 }
+//*****************************************************************************************************
 
-void tresPuntas(){ //Función que es llamada para analizar las conexiones entre 3 puntas
+void cable2Puntas(){ // Función para hacer pruebas en un ensamble de 2 puntas con RM81418
+  delay(750); //1250
+  continuidad(conector3, conector1, 4);
+  delay(50);
+  //Serial.println();
+  Serial.println(F("break"));
+  delay(250);
+  mandarDatos(2, conexiones2Puntas);
+  delay(50);
+  //Serial.println()
   
-    delay(1125); //1250
-     for(int i = 0; i < 10; i++){
-        pinMode(j24[i], OUTPUT);
-        pinMode(p9[i], INPUT);
-        pinMode(p4[i], INPUT);
-        digitalWrite(j24[i], LOW);
-      }
-      continuidad();
-     delay(50);
-     variables();
-      for(int i = 0; i < 10; i++){
-        pinMode(j24[i], OUTPUT);
-        pinMode(p9[i], INPUT);
-        pinMode(p4[i], INPUT);
-        digitalWrite(j24[i], LOW);
-      }
-      continuidadj24p9(3);
-      delay(50);
-      variables();
-      for(int i = 0; i < 10; i++){
-        pinMode(j24[i], INPUT);
-        pinMode(p9[i], OUTPUT);
-        pinMode(p4[i], INPUT);
-        digitalWrite(p9[i], LOW);
-      }
-      continuidadp9p4();
-      delay(50);
-      variables();
-
-
-      delay(125);
-      Serial.println(F("break"));
-      
-      if(noConectado == 3){
-        digitalWrite(redLed, HIGH);
-        delay(4000);
-        digitalWrite(redLed, LOW);
-      }
-      
-      delay(125);
-      rasp3();
-      delay(125);
-      //Serial.println(ensambleAprobado);
-      delay(250);
-      //delay(50);
-      
-      if(ensambleAprobado == 3){
-        Serial.println(ensambleAprobado);
-        digitalWrite(greenLed, HIGH);
-        delay(4000);
-        digitalWrite(greenLed, LOW);
-      }
-      else if(fallo >0 and noConectado != 3 and ensambleAprobado!=3){ //if(ensambleAprobado >0 and ensambleAprobado!=3)
-        Serial.println(ensambleAprobado);
-        digitalWrite(redLed, HIGH);
-        digitalWrite(buz, HIGH);
-        delay(4000);
-        digitalWrite(redLed, LOW);
-        digitalWrite(buz, LOW);
-      }
-      
-      
-      ensambleAprobado = 0;
-      noConectado = 0;
-      fallo = 0;
+  if(conexionesCorrectas == 1){
+    Serial.println(conexionesCorrectas);
+    digitalWrite(greenLed, HIGH);
+    delay(4000);
+    digitalWrite(greenLed, LOW);
+  }
+  else{
+    Serial.println(conexionesCorrectas);
+    digitalWrite(redLed, HIGH);
+    for(int b = 0; b < 4; b++){
+      digitalWrite(buz, HIGH);
+      delay(500);
+      digitalWrite(buz, LOW);
+      delay(500);
+    }
+    digitalWrite(redLed, LOW);
+  }
+  conexionesCorrectas = 0;
+  conexionesIncorrectas = 0;
 }
-
-void dosPuntas(){ //Función que es llamada para analizar las conexiones entre 2 puntas
-  delay(1125); //1250
-    
-      for(int i = 0; i < 10; i++){
-        pinMode(j24[i], OUTPUT);
-        pinMode(p9[i], INPUT);
-        pinMode(p4[i], INPUT);
-        digitalWrite(j24[i], LOW);
-      }
-      continuidadj24p9(2);
-      delay(50);
-      variables();
+//*****************************************************************************************************
 
 
-      delay(250);
-      Serial.println(F("break"));
-      delay(125);
-      if(noConectado == 1){
-        digitalWrite(redLed, HIGH);
-        delay(4000);
-        digitalWrite(redLed, LOW);
-      }
-      
-      delay(250);
-      rasp2();
-      delay(125);
-      
-      if(ensambleAprobado == 1){
-        Serial.println(ensambleAprobado);
-        digitalWrite(greenLed, HIGH);
-        delay(4000);
-        digitalWrite(greenLed, LOW);
-      }
-      else if(fallo >0 and noConectado != 1 and ensambleAprobado!=1){ //if(ensambleAprobado >0 and ensambleAprobado!=3)
-        Serial.println(ensambleAprobado);
-        digitalWrite(redLed, HIGH);
-        digitalWrite(buz, HIGH);
-        delay(4000);
-        digitalWrite(redLed, LOW);
-        digitalWrite(buz, LOW);
-      }
-      
-      
-      ensambleAprobado = 0;
-      noConectado = 0;
-      fallo = 0;
-}
+//*****************************************************************************************************
 
-    
-
-void loop() {
- if (Serial.available() > 0) {
+void loop(){
+  
+  if (Serial.available() > 0) { // Si el puerto serial esta disponible
     String numeroPuntas = Serial.readStringUntil('\n');
     if(numeroPuntas=="3"){
       //delay(250);
-      tresPuntas();
+      cable3Puntas();
     }
     else if(numeroPuntas=="2"){
-      dosPuntas();
+      cable2Puntas();
     }
   }
- 
+
 }
