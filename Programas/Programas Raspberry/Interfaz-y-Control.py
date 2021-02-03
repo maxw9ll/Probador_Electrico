@@ -103,7 +103,7 @@ def wiw(): # Función donde comprueba si la WO ingresada es válida y si existe 
                 
             
     finally: # Una vez establecido el puerto de comunicación se procede a mandar la WO para obtener la RM y el No. de parte
-        url = *********************************************************************
+        url = "*********************************************************************"
         myobj = {
         "apiUser": "*********",
         "apiKey": "**********************************",
